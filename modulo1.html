@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo I - Curso de Automatización con n8n</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --sidebar-bg: #161b26;
+            --primary: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #22c55e;
+            --accent-orange: #ff6d5a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            display: flex;
+        }
+
+        /* --- BOTÓN FLOTANTE COHETE --- */
+        .rocket-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background-color: var(--accent-orange);
+            color: #fff;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(255, 109, 90, 0.4);
+            transition: transform 0.3s ease, background-color 0.2s;
+        }
+
+        .rocket-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            background-color: #e05543;
+        }
+
+        /* --- BARRA LATERAL (SIDEBAR) COLAPSABLE --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #2d3748;
+            padding: 5rem 1rem 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            left: -280px; /* Escondida por defecto */
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.open {
+            left: 0; /* Desplegada al hacer clic */
+        }
+
+        /* Overlay para cerrar sidebar al hacer clic afuera */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Usuario y Progreso */
+        .user-box {
+            background-color: #0f1219;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+            margin-bottom: 1.5rem;
+        }
+        .user-box h4 { margin: 0 0 0.5rem 0; color: var(--accent-orange); font-size: 0.85rem; }
+        .user-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; }
+
+        .progress-section { margin-bottom: 2rem; }
+        .progress-section h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .progress-bar-bg {
+            background-color: #2d3748;
+            border-radius: 10px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: var(--success);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-text { font-size: 0.8rem; text-align: right; margin-top: 0.3rem; color: var(--success); font-weight: bold; }
+
+        /* Menú de Navegación */
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-menu li { margin-bottom: 0.5rem; }
+        .nav-menu a {
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .nav-menu a:hover { background-color: #2d3748; }
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            background-color: #334155;
+            color: #fff;
+        }
+        .status-badge.completed { background-color: var(--success); }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px 40px 80px;
+            flex-grow: 1;
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: var(--accent-orange); margin-top: 35px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        h3 { color: var(--primary); margin-top: 25px; }
+
+        p, li { font-size: 1.05rem; color: #cbd5e1; }
+        ul { margin-left: 20px; }
+
+        /* Espacios para Videos */
+        .video-placeholder {
+            background-color: #000000;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            margin: 30px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .video-placeholder .play-icon {
+            font-size: 45px;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+        }
+
+        /* Tabla de Resumen */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #334155;
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: var(--primary);
+        }
+
+        /* Juego Interactivo */
+        .game-wrapper {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            margin-top: 50px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            text-align: center;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.5s ease-in; }
+
+        .block-grid { display: flex; flex-direction: column; gap: 12px; margin: 25px 0; }
+        .block {
+            background-color: #334155;
+            border: 2px solid #475569;
+            padding: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: left;
+            color: var(--text-main);
+        }
+
+        .block:hover { background-color: #475569; border-color: var(--primary); transform: translateX(8px); }
+        .block.selected { opacity: 0; pointer-events: none; height: 0; padding: 0; margin: 0; border: none; overflow: hidden; }
+
+        .sequence-area {
+            min-height: 250px;
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .sequence-item {
+            background-color: var(--primary);
+            color: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: left;
+            animation: popIn 0.3s ease-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .game-btn {
+            background-color: var(--primary);
+            color: var(--bg-color);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .game-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+        .btn-reset { background-color: transparent; border: 2px solid var(--text-muted); color: var(--text-muted); margin-left: 15px; box-shadow: none; }
+        .btn-reset:hover { background-color: var(--text-muted); color: var(--bg-color); transform: none; box-shadow: none; }
+
+        .feedback { margin-top: 20px; font-weight: bold; font-size: 18px; min-height: 27px; }
+        .feedback-error { color: var(--error); }
+        .feedback-success { color: var(--success); }
+
+        .progress-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .dot { width: 12px; height: 12px; background: #475569; border-radius: 50%; }
+        .dot.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- BOTÓN COHETE PARA DESPLEGAR SIDEBAR -->
+    <button class="rocket-btn" id="rocketToggle" title="Abrir Menú de Navegación">🚀</button>
+
+    <!-- OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- BARRA LATERAL DESPLEGABLE -->
+    <aside class="sidebar" id="sidebar">
+        <div class="user-box">
+            <h4>USUARIO ACTIVO</h4>
+            <p id="userEmailDisplay">Sin Iniciar Sesión</p>
+        </div>
+
+        <div class="progress-section">
+            <h3>Progreso del Curso</h3>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="overallProgressBar"></div>
+            </div>
+            <div class="progress-text" id="overallProgressText">0% Completado</div>
+        </div>
+
+        <ul class="nav-menu">
+            <li><a href="index.html">📌 Inicio / Menú</a></li>
+            <li>
+                <a href="modulo1.html" style="background-color: #2d3748;">
+                    <span>Módulo I: Fundamentos</span>
+                    <span class="status-badge" id="m1Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo2.html">
+                    <span>Módulo II: Automatización</span>
+                    <span class="status-badge" id="m2Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo3.html">
+                    <span>Módulo III: Práctica e IA</span>
+                    <span class="status-badge" id="m3Badge">Pendiente</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- CONTENIDO DEL MÓDULO -->
+    <div class="container">
+
+        <header>
+            <h1>Módulo I: Fundamentos de OVA, LMS y Automatización con n8n</h1>
+        </header>
+
+        <!-- VIDEO 1: INTRODUCCIÓN Y CONCEPTOS BASE -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 1: Introducción a LMS y OVA ]</strong></p>
+        </div>
+
+        <h2>¿Qué es un LMS?</h2>
+        <p>LMS (Learning Management System) o Sistema de Gestión del Aprendizaje es una plataforma digital diseñada para administrar, distribuir y gestionar contenidos educativos. En ella se alojan cursos, materiales de estudio, actividades, evaluaciones y recursos virtuales destinados al proceso de aprendizaje de los usuarios.</p>
+
+        <h2>¿Qué es un OVA?</h2>
+        <p>OVA (Objeto Virtual de Aprendizaje) es un recurso digital diseñado con fines educativos para facilitar el aprendizaje de un tema específico. Los OVA pueden incluir contenidos interactivos, videos, simulaciones, evaluaciones, animaciones, infografías y otros elementos multimedia que apoyan el proceso de enseñanza y aprendizaje de los estudiantes.</p>
+
+        <h2>Relación entre LMS y OVA:</h2>
+        <p>Los OVA son los recursos educativos que se alojan y distribuyen a través de un LMS, permitiendo a los estudiantes acceder a contenidos interactivos dentro de una plataforma de aprendizaje organizada.</p>
+
+        <!-- VIDEO 2: POR QUÉ ELEGIR N8N -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 2: Por qué elegir n8n vs Otras Herramientas ]</strong></p>
+        </div>
+
+        <h2>¿Por qué elegir n8n?</h2>
+        <p>La elección de n8n se basa principalmente en el control sobre los datos y la flexibilidad que ofrece la plataforma. A diferencia de otras soluciones de automatización, n8n permite que el creador de los flujos tenga mayor control sobre la información que ingresa, se procesa y sale del sistema, lo que facilita el cumplimiento de políticas de seguridad y privacidad.</p>
+        <p>Además, n8n ofrece la posibilidad de implementar una instalación local (self-hosted), permitiendo que la organización mantenga sus datos dentro de su propia infraestructura y reduzca la dependencia de servicios externos.</p>
+        <p>Desde el punto de vista económico, n8n suele resultar más rentable que muchas plataformas de automatización tradicionales, especialmente cuando se manejan grandes volúmenes de ejecuciones o se requiere escalar procesos sin incrementar significativamente los costos de licenciamiento.</p>
+        <p>Finalmente, su naturaleza flexible y de código abierto facilita la personalización, la integración con múltiples sistemas y la adaptación a necesidades específicas de la organización, convirtiéndola en una solución escalable para proyectos presentes y futuros.</p>
+
+        <!-- VIDEO 3: NÚCLEO LÓGICO N8N -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 3: Triggers, Webhooks y Estructuras de Control ]</strong></p>
+        </div>
+
+        <h2>Tema 1: El interruptor y el cartero (Triggers y Webhooks)</h2>
+
+        <h3>¿Qué es un Trigger?</h3>
+        <p>Un Trigger es el punto de inicio de una automatización. Es el evento que le dice al flujo: "Empieza a trabajar ahora".</p>
+        <p>Piensa en un interruptor de luz. Mientras el interruptor está apagado, nada ocurre. Cuando alguien lo presiona, la luz se enciende. De la misma manera, un Trigger activa una secuencia de acciones.</p>
+        
+        <p><strong>Ejemplos cotidianos:</strong></p>
+        <ul>
+            <li>La alarma del celular suena a las 6:00 AM.</li>
+            <li>El semáforo cambia a verde.</li>
+            <li>El despertador de una reunión envía una notificación.</li>
+        </ul>
+        <p>En todos estos casos existe un evento que inicia una acción.</p>
+
+        <p><strong>En n8n:</strong> Un Trigger puede activarse cuando:</p>
+        <ul>
+            <li>Llega una hora específica.</li>
+            <li>Se recibe un correo electrónico.</li>
+            <li>Se crea un archivo en una carpeta.</li>
+            <li>Se agrega una fila en Excel.</li>
+            <li>Se publica algo en una red social.</li>
+        </ul>
+        <p>Sin Trigger, el flujo nunca comenzará.</p>
+
+        <h3>¿Qué es un Webhook?</h3>
+        <p>Un Webhook también inicia un flujo, pero funciona de forma diferente.</p>
+        <p>Mientras un Trigger puede revisar periódicamente si algo ocurrió, un Webhook espera que otro sistema le envíe un aviso inmediato.</p>
+
+        <p><strong>La experiencia cotidiana:</strong><br>
+        Imagina que pediste comida a domicilio. Podrías abrir la aplicación cada minuto para revisar si el repartidor ya llegó. Eso sería similar a estar verificando constantemente. Pero normalmente recibes una notificación que dice: <em>"Tu pedido ha llegado."</em> Ese aviso instantáneo es el equivalente a un Webhook.</p>
+
+        <p><strong>En n8n:</strong> Un Webhook recibe información desde aplicaciones externas. Por ejemplo:</p>
+        <ul>
+            <li>Un formulario web es enviado.</li>
+            <li>Un cliente realiza una compra.</li>
+            <li>Un usuario completa un registro.</li>
+            <li>Un sistema externo envía información automáticamente.</li>
+        </ul>
+        <p>El Webhook recibe esos datos y activa el flujo inmediatamente.</p>
+
+        <h2>Nodo IF (La bifurcación en el camino)</h2>
+        <h3>¿Qué es un nodo IF?</h3>
+        <p>El nodo IF permite tomar decisiones. Las computadoras no razonan como las personas, pero sí pueden responder preguntas con dos posibles resultados: <strong>Sí (True)</strong> o <strong>No (False)</strong>. Por eso el nodo IF funciona como una bifurcación en una carretera.</p>
+
+        <p><strong>La experiencia cotidiana:</strong><br>
+        Antes de salir de casa observas el clima y preguntas: <em>¿Está lloviendo?</em> Existen únicamente dos respuestas:</p>
+        <ul>
+            <li><strong>Rama True (Verdadero):</strong> Si está lloviendo: Tomas la sombrilla, usas impermeable, sales con precaución.</li>
+            <li><strong>Rama False (Falso):</strong> Si no está lloviendo: Tomas gafas de sol, sales normalmente.</li>
+        </ul>
+        <p>La decisión cambia completamente el camino que seguirás.</p>
+
+        <p><strong>En n8n:</strong> Un nodo IF puede preguntar:</p>
+        <ul>
+            <li>¿El correo contiene la palabra "Urgente"?</li>
+            <li>¿La factura supera los $500.000?</li>
+            <li>¿El cliente es nuevo?</li>
+            <li>¿El pago fue aprobado?</li>
+        </ul>
+        <p>Dependiendo de la respuesta, el flujo seguirá por la rama True o False.</p>
+
+        <h2>Action Nodes (Las manos a la obra)</h2>
+        <h3>¿Qué es un Action Node?</h3>
+        <p>Los Action Nodes son los trabajadores de la automatización. Mientras el Trigger inicia el proceso y el IF toma decisiones, los Action Nodes ejecutan tareas concretas. Son los nodos que hacen que las cosas sucedan.</p>
+
+        <p><strong>La experiencia cotidiana:</strong><br>
+        Imagina que decidiste llevar sombrilla porque estaba lloviendo. Abrir el armario, tomar la sombrilla, cerrar el armario. Todas esas son acciones. No son decisiones; simplemente son tareas que deben realizarse.</p>
+
+        <p><strong>En n8n:</strong> Un Action Node puede:</p>
+        <ul>
+            <li>Enviar un correo.</li>
+            <li>Enviar un mensaje por WhatsApp.</li>
+            <li>Crear una fila en Excel.</li>
+            <li>Guardar información en una base de datos.</li>
+            <li>Crear una carpeta.</li>
+            <li>Generar un documento PDF.</li>
+            <li>Actualizar un registro.</li>
+        </ul>
+        <p>Son los nodos más utilizados porque representan el trabajo real de la automatización.</p>
+
+        <h2>Nodo Code (La receta secreta de la abuela)</h2>
+        <h3>¿Qué es un Nodo Code?</h3>
+        <p>Aunque n8n tiene cientos de nodos listos para usar, algunas situaciones requieren algo muy específico. Para esos casos existe el Nodo Code. Este nodo permite escribir instrucciones personalizadas usando programación.</p>
+
+        <p><strong>La experiencia cotidiana:</strong><br>
+        Imagina que compras una mezcla para preparar un pastel. Las instrucciones dicen: Agregar agua, agregar huevos, hornear. Eso funciona para la mayoría de las personas. Pero tú quieres que tenga el sabor especial de tu abuela. Entonces decides: Agregar canela, incorporar ralladura de limón, mezclar los ingredientes en otro orden. Estás creando un procedimiento personalizado.</p>
+
+        <p><strong>En n8n:</strong> El Nodo Code se utiliza cuando necesitas:</p>
+        <ul>
+            <li>Realizar cálculos especiales.</li>
+            <li>Transformar datos complejos.</li>
+            <li>Limpiar información.</li>
+            <li>Modificar textos automáticamente.</li>
+            <li>Aplicar reglas que no existen en otros nodos.</li>
+        </ul>
+        <p>Por ejemplo, si recibes nombres escritos así: <code>juan perez</code>, <code>MARIA GOMEZ</code>, <code>cArLoS rOjAs</code>, podrías usar un Nodo Code para convertirlos automáticamente a: <code>Juan Perez</code>, <code>Maria Gomez</code>, <code>Carlos Rojas</code>.</p>
+
+        <h2>Resumen rápido</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th>Función</th>
+                    <th>Ejemplo cotidiano</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Trigger</strong></td>
+                    <td>Inicia el flujo</td>
+                    <td>La alarma del celular</td>
+                </tr>
+                <tr>
+                    <td><strong>Webhook</strong></td>
+                    <td>Recibe un aviso externo</td>
+                    <td>El timbre del cartero</td>
+                </tr>
+                <tr>
+                    <td><strong>IF</strong></td>
+                    <td>Toma una decisión</td>
+                    <td>¿Está lloviendo?</td>
+                </tr>
+                <tr>
+                    <td><strong>Rama True</strong></td>
+                    <td>Camino cuando la condición se cumple</td>
+                    <td>Llevar sombrilla</td>
+                </tr>
+                <tr>
+                    <td><strong>Rama False</strong></td>
+                    <td>Camino cuando la condición no se cumple</td>
+                    <td>Llevar gafas de sol</td>
+                </tr>
+                <tr>
+                    <td><strong>Action Node</strong></td>
+                    <td>Realiza una tarea</td>
+                    <td>Abrir el armario y tomar la sombrilla</td>
+                </tr>
+                <tr>
+                    <td><strong>Nodo Code</strong></td>
+                    <td>Realiza una tarea personalizada</td>
+                    <td>La receta secreta de la abuela</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Idea clave:</strong> Una automatización en n8n funciona igual que una rutina diaria:<br>
+        <em>Algo ocurre (Trigger/Webhook) → se evalúa una condición (IF) → se toma un camino (True o False) → se realizan acciones (Action Nodes) → si se necesita algo especial, se usa un Nodo Code.</em></p>
+
+        <!-- EVALUACIÓN: JUEGO LÓGICA BÁSICA -->
+        <div class="game-wrapper">
+            <div id="pantalla-0" class="screen active">
+                <h1>Pensamiento Lógico</h1>
+                <h3>Módulo de Introducción a la Automatización</h3>
+                <p>Toda automatización, por muy compleja que parezca, funciona igual que nuestra toma de decisiones en la vida diaria.</p>
+                <p>En este reto resolverás 3 escenarios cotidianos. Tu objetivo es hacer clic en los bloques en el orden correcto para crear un flujo lógico perfecto.</p>
+                <p><strong>Regla de oro:</strong> Inicio (Disparador) ➔ Pregunta (Condición) ➔ Camino Sí ➔ Camino No ➔ Fin (Acción).</p>
+                <button class="game-btn" onclick="iniciarJuego()">Iniciar Nivel 1</button>
+            </div>
+
+            <div id="pantalla-1" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+                <h1>Reto 1: La Mañana</h1>
+                <p>Ordena los bloques para crear tu rutina de inicio de día.</p>
+                
+                <div class="block-grid" id="opciones-nivel-1">
+                    <div class="block" onclick="seleccionarBloque(1, 'A', '[Camino SÍ] Preparar un café doble.')">[Camino SÍ] Preparar un café doble.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'B', '[Condición] ¿Tengo mucho sueño todavía?')">[Condición] ¿Tengo mucho sueño todavía?</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'C', '[Acción Final] Bañarse y salir al trabajo.')">[Acción Final] Bañarse y salir al trabajo.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'D', '[Disparador] Suena la alarma a las 6:00 AM.')">[Disparador] Suena la alarma a las 6:00 AM.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'E', '[Camino NO] Hacer 15 min de ejercicio.')">[Camino NO] Hacer 15 min de ejercicio.</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-1"></div>
+                <div id="feedback-1" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(1)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-1" style="display:none;" onclick="siguientePantalla(2)">Ir al Reto 2</button>
+            </div>
+
+            <div id="pantalla-2" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot active"></div><div class="dot"></div></div>
+                <h1>Reto 2: La Cena</h1>
+                <p>Llegas tarde a casa. Ordena los pasos lógicos para resolver tu cena.</p>
+                
+                <div class="block-grid" id="opciones-nivel-2">
+                    <div class="block" onclick="seleccionarBloque(2, 'A', '[Disparador] Llegas a casa con mucha hambre a las 7:00 PM.')">[Disparador] Llegas a casa con mucha hambre a las 7:00 PM.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'B', '[Acción Final] Comer, lavar los platos y descansar.')">[Acción Final] Comer, lavar los platos y descansar.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'C', '[Camino SÍ] Sacar ingredientes y cocinar.')">[Camino SÍ] Sacar ingredientes y cocinar.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'D', '[Condición] ¿Hay comida en la nevera?')">[Condición] ¿Hay comida en la nevera?</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'E', '[Camino NO] Pedir una pizza a domicilio.')">[Camino NO] Pedir una pizza a domicilio.</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-2"></div>
+                <div id="feedback-2" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(2)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-2" style="display:none;" onclick="siguientePantalla(3)">Ir al Reto 3</button>
+            </div>
+
+            <div id="pantalla-3" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div></div>
+                <h1>Reto 3: La Lavandería</h1>
+                <p>Es hora de lavar. Ordena el proceso para no dañar la ropa.</p>
+                
+                <div class="block-grid" id="opciones-nivel-3">
+                    <div class="block" onclick="seleccionarBloque(3, 'A', 'Usar ciclo de ropa oscura y agua fría.')">Usar ciclo de ropa oscura y agua fría.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'B', 'Sacar la ropa y tenderla para secar.')">Sacar la ropa y tenderla para secar.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'C', 'La cesta de ropa sucia está llena.')">La cesta de ropa sucia está llena.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'D', 'Usar ciclo de blancos y un poco de cloro.')">Usar ciclo de blancos y un poco de cloro.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'E', 'Revisar: ¿Es una carga de ropa blanca?')">Revisar: ¿Es una carga de ropa blanca?</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-3"></div>
+                <div id="feedback-3" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(3)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-3" style="display:none;" onclick="siguientePantalla(4)">Finalizar Evaluación</button>
+            </div>
+
+            <div id="pantalla-4" class="screen">
+                <h1>¡Felicidades! 🎉</h1>
+                <h3>Has dominado el Pensamiento Lógico</h3>
+                <p>Acabas de demostrar que tu cerebro ya entiende la lógica de la automatización. Conceptos como <strong>Triggers</strong> (Disparadores) y <strong>Condicionales IF</strong> (Preguntas con Sí/No) ya son parte de tu forma de resolver problemas.</p>
+                <p>¡Estás oficialmente listo para aprender a pasar esta misma lógica a los nodos de <strong>n8n</strong>!</p>
+                
+                <button class="game-btn" onclick="location.reload()" style="margin-top: 30px;">Volver a Jugar</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // --- LÓGICA DE DESPLEGABLE SIDEBAR ---
+    const rocketToggle = document.getElementById('rocketToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('active');
+    }
+
+    rocketToggle.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    // --- ACTUALIZACIÓN DE USUARIO Y PROGRESO ---
+    function updateProgressUI() {
+        const user = localStorage.getItem('n8n_user_email');
+        if (user) {
+            document.getElementById('userEmailDisplay').innerText = user;
+        }
+
+        const progress = JSON.parse(localStorage.getItem('n8n_progress')) || { m1: false, m2: false, m3: false };
+        let completedCount = 0;
+        
+        if (progress.m1) { completedCount++; document.getElementById('m1Badge').innerText = 'Completado'; document.getElementById('m1Badge').classList.add('completed'); }
+        if (progress.m2) { completedCount++; document.getElementById('m2Badge').innerText = 'Completado'; document.getElementById('m2Badge').classList.add('completed'); }
+        if (progress.m3) { completedCount++; document.getElementById('m3Badge').innerText = 'Completado'; document.getElementById('m3Badge').classList.add('completed'); }
+
+        const percentage = Math.round((completedCount / 3) * 100);
+        document.getElementById('overallProgressBar').style.width = percentage + '%';
+        document.getElementById('overallProgressText').innerText = percentage + '% Completado';
+    }
+
+    // --- LÓGICA DEL JUEGO INTERACTIVO ---
+    let secuenciaActual = [];
+    
+    const respuestasCorrectas = {
+        1: ['D', 'B', 'A', 'E', 'C'],
+        2: ['A', 'D', 'C', 'E', 'B'],
+        3: ['C', 'E', 'D', 'A', 'B']
+    };
+
+    function iniciarJuego() {
+        document.getElementById('pantalla-0').classList.remove('active');
+        document.getElementById('pantalla-1').classList.add('active');
+    }
+
+    function siguientePantalla(num) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('pantalla-' + num).classList.add('active');
+        secuenciaActual = []; 
+    }
+
+    function seleccionarBloque(nivel, id, texto) {
+        if(secuenciaActual.length >= 5) return;
+        
+        event.target.classList.add('selected');
+        
+        secuenciaActual.push(id);
+        const area = document.getElementById('secuencia-nivel-' + nivel);
+        const item = document.createElement('div');
+        item.className = 'sequence-item';
+        
+        item.innerText = secuenciaActual.length + ". " + texto;
+        area.appendChild(item);
+
+        if(secuenciaActual.length === 5) {
+            validarNivel(nivel);
+        }
+    }
+
+    function validarNivel(nivel) {
+        const feedback = document.getElementById('feedback-' + nivel);
+        const botonSiguiente = document.getElementById('btn-next-' + nivel);
+        
+        if(JSON.stringify(secuenciaActual) === JSON.stringify(respuestasCorrectas[nivel])) {
+            feedback.innerHTML = '<span class="feedback-success">¡Excelente! El flujo lógico es correcto. ✅</span>';
+            botonSiguiente.style.display = 'inline-block';
+
+            // Al superar el último nivel, marcar Módulo I como completado en el localStorage
+            if (nivel === 3) {
+                let progress = JSON.parse(localStorage.getItem('n8n_progress')) || {};
+                progress.m1 = true;
+                localStorage.setItem('n8n_progress', JSON.stringify(progress));
+                updateProgressUI();
+            }
+        } else {
+            feedback.innerHTML = '<span class="feedback-error">Mmm, la secuencia no es lógica. Piensa en el orden natural y vuelve a intentar. ❌</span>';
+        }
+    }
+
+    function reiniciarNivel(nivel) {
+        secuenciaActual = [];
+        document.getElementById('secuencia-nivel-' + nivel).innerHTML = '';
+        document.getElementById('feedback-' + nivel).innerHTML = '';
+        document.getElementById('btn-next-' + nivel).style.display = 'none';
+        
+        const bloques = document.getElementById('opciones-nivel-' + nivel).children;
+        for(let b of bloques) {
+            b.classList.remove('selected');
+        }
+    }
+
+    window.onload = updateProgressUI;
+</script>
+</body>
+</html>

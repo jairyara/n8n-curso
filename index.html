@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OVA n8n - Plataforma de Aprendizaje Interactiva</title>
+  <style>
+    :root {
+      --primary-color: #ff6d5a;
+      --bg-dark: #0f1219;
+      --card-bg: #1e2430;
+      --sidebar-bg: #161b26;
+      --text-color: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-color);
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+    /* Layout con Sidebar */
+    .sidebar {
+      width: 280px;
+      background-color: var(--sidebar-bg);
+      border-right: 1px solid #2d3748;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .main-content {
+      margin-left: 280px;
+      flex-grow: 1;
+      padding: 2rem;
+    }
+    /* Login & User Box */
+    .user-box {
+      background-color: #0f1219;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      margin-bottom: 1.5rem;
+    }
+    .user-box h4 { margin: 0 0 0.5rem 0; color: var(--primary-color); font-size: 0.9rem; }
+    .user-box p { margin: 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-all; }
+    .btn-login {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 0.6rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    .btn-login:hover { background-color: #e05543; }
+    
+    /* Barra de Progreso */
+    .progress-section { margin-bottom: 2rem; }
+    .progress-section h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .progress-bar-bg {
+      background-color: #2d3748;
+      border-radius: 10px;
+      height: 12px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background-color: var(--accent-green);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .progress-text { font-size: 0.8rem; text-align: right; margin-top: 0.3rem; color: var(--accent-green); font-weight: bold; }
+
+    /* Menú Lateral */
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-menu li { margin-bottom: 0.5rem; }
+    .nav-menu a {
+      color: var(--text-color);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .nav-menu a:hover { background-color: #2d3748; }
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background-color: #334155;
+      color: #fff;
+    }
+    .status-badge.completed { background-color: var(--accent-green); }
+    .status-badge.in-progress { background-color: #f59e0b; }
+
+    /* Header y Tarjetas */
+    header { border-bottom: 2px solid var(--primary-color); padding-bottom: 1rem; margin-bottom: 2rem; }
+    header h1 { color: var(--primary-color); margin: 0 0 0.5rem 0; }
+    .video-placeholder {
+      background-color: #000;
+      border: 2px dashed #333;
+      border-radius: 8px;
+      height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      margin: 1.5rem 0;
+    }
+    .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .module-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      border: 1px solid #2d3748;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .module-card h3 { color: var(--primary-color); margin-top: 0; }
+    .btn {
+      display: block;
+      text-align: center;
+      background-color: var(--primary-color);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.7rem;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    /* Modal de Login */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      width: 350px;
+      border: 1px solid var(--primary-color);
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 1rem 0;
+      border-radius: 5px;
+      border: 1px solid #334155;
+      background-color: #0f1219;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra Lateral (Sidebar) -->
+  <aside class="sidebar">
+    <div class="user-box">
+      <h4>USUARIO ACTIVO</h4>
+      <p id="userEmailDisplay">Sin Iniciar Sesión</p>
+      <button class="btn-login" id="loginBtn" onclick="openModal()">Ingresar Correo</button>
+    </div>
+
+    <div class="progress-section">
+      <h3>Progreso del Curso</h3>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="overallProgressBar"></div>
+      </div>
+      <div class="progress-text" id="overallProgressText">0% Completado</div>
+    </div>
+
+    <ul class="nav-menu">
+      <li><a href="index.html" style="background-color: #2d3748;">📌 Inicio / Menú</a></li>
+      <li>
+        <a href="modulo1.html">
+          <span>Módulo I: Fundamentos</span>
+          <span class="status-badge" id="m1Badge">Pendiente</span>
+        </a>
+      </li>
+      <li>
+        <a href="modulo2.html">
+          <span>Módulo II: Automatización</span>
+          <span class="status-badge" id="m2Badge">Pendiente</span>
+        </a>
+      </li>
+      <li>
+        <a href="modulo3.html">
+          <span>Módulo III: Práctica e IA</span>
+          <span class="status-badge" id="m3Badge">Pendiente</span>
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+    <header>
+      <h1>OBJETOS VIRTUALES DE APRENDIZAJE (OVAS)</h1>
+      <p>Virtual Aprende — Semillero de Investigación en Automatización con n8n | ETITC 2026</p>
+    </header>
+
+    <div class="video-placeholder">
+      <div style="font-size: 40px; margin-bottom: 10px;">▶</div>
+      <p><strong>[ Espacio Reservado para Video Introductorio General ]</strong></p>
+    </div>
+
+    <h2>Ruta de Formación</h2>
+    <div class="modules-grid">
+      <div class="module-card">
+        <div>
+          <h3>Módulo I: Fundamentos</h3>
+          <p>Conceptos clave de LMS, OVA, comparativas con Zapier/Make y lógica de Triggers, Webhooks e IF.</p>
+        </div>
+        <a href="modulo1.html" class="btn">Iniciar Módulo I</a>
+      </div>
+
+      <div class="module-card">
+        <div>
+          <h3>Módulo II: Automatización</h3>
+          <p>Registro en n8n Cloud, primer flujo, JSON, APIs y nodos avanzados (Switch, Split Out, Merge, Loop).</p>
+        </div>
+        <a href="modulo2.html" class="btn">Iniciar Módulo II</a>
+      </div>
+
+      <div class="module-card">
+        <div>
+          <h3>Módulo III: Práctica e IA</h3>
+          <p>Integración con OpenAI, Gmail, Google Sheets, gestión de errores, logging y taller VIP completo.</p>
+        </div>
+        <a href="modulo3.html" class="btn">Iniciar Módulo III</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Login Email -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0; color:var(--primary-color);">Iniciar Sesión / Registro</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted);">Ingresa tu correo para guardar tu avance en la plataforma:</p>
+      <input type="email" id="emailInput" placeholder="tu_correo@ejemplo.com" required>
+      <button class="btn-login" onclick="saveUser()">Guardar y Continuar</button>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    function saveUser() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (email) {
+        localStorage.setItem('n8n_user_email', email);
+        if (!localStorage.getItem('n8n_progress')) {
+          localStorage.setItem('n8n_progress', JSON.stringify({ m1: false, m2: false, m3: false }));
+        }
+        document.getElementById('loginModal').style.display = 'none';
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      const user = localStorage.getItem('n8n_user_email');
+      if (user) {
+        document.getElementById('userEmailDisplay').innerText = user;
+        document.getElementById('loginBtn').innerText = 'Cambiar Correo';
+      }
+
+      const progress = JSON.parse(localStorage.getItem('n8n_progress')) || { m1: false, m2: false, m3: false };
+      let completedCount = 0;
+      if (progress.m1) { completedCount++; document.getElementById('m1Badge').innerText = 'Completado'; document.getElementById('m1Badge').classList.add('completed'); }
+      if (progress.m2) { completedCount++; document.getElementById('m2Badge').innerText = 'Completado'; document.getElementById('m2Badge').classList.add('completed'); }
+      if (progress.m3) { completedCount++; document.getElementById('m3Badge').innerText = 'Completado'; document.getElementById('m3Badge').classList.add('completed'); }
+
+      const percentage = Math.round((completedCount / 3) * 100);
+      document.getElementById('overallProgressBar').style.width = percentage + '%';
+      document.getElementById('overallProgressText').innerText = percentage + '% Completado';
+    }
+
+    window.onload = function() {
+      if (!localStorage.getItem('n8n_user_email')) {
+        openModal();
+      } else {
+        updateUI();
+      }
+    };
+  </script>
+</body>
+</html>

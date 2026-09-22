@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo II - Curso de Automatización con n8n</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --sidebar-bg: #161b26;
+            --primary: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #22c55e;
+            --accent-orange: #ff6d5a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            display: flex;
+        }
+
+        /* --- BOTÓN FLOTANTE COHETE --- */
+        .rocket-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background-color: var(--accent-orange);
+            color: #fff;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(255, 109, 90, 0.4);
+            transition: transform 0.3s ease, background-color 0.2s;
+        }
+
+        .rocket-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            background-color: #e05543;
+        }
+
+        /* --- BARRA LATERAL (SIDEBAR) COLAPSABLE --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #2d3748;
+            padding: 5rem 1rem 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            left: -280px; /* Escondida por defecto */
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.open {
+            left: 0; /* Desplegada al hacer clic */
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Usuario y Progreso */
+        .user-box {
+            background-color: #0f1219;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+            margin-bottom: 1.5rem;
+        }
+        .user-box h4 { margin: 0 0 0.5rem 0; color: var(--accent-orange); font-size: 0.85rem; }
+        .user-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; }
+
+        .progress-section { margin-bottom: 2rem; }
+        .progress-section h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .progress-bar-bg {
+            background-color: #2d3748;
+            border-radius: 10px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: var(--success);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-text { font-size: 0.8rem; text-align: right; margin-top: 0.3rem; color: var(--success); font-weight: bold; }
+
+        /* Menú de Navegación */
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-menu li { margin-bottom: 0.5rem; }
+        .nav-menu a {
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .nav-menu a:hover { background-color: #2d3748; }
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            background-color: #334155;
+            color: #fff;
+        }
+        .status-badge.completed { background-color: var(--success); }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px 40px 80px;
+            flex-grow: 1;
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: var(--accent-orange); margin-top: 35px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        h3 { color: var(--primary); margin-top: 25px; }
+
+        p, li { font-size: 1.05rem; color: #cbd5e1; }
+        ul, ol { margin-left: 20px; }
+
+        code {
+            background-color: #0f1219;
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        pre {
+            background-color: #0f1219;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        /* Imágenes del paso a paso */
+        .step-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            margin: 15px 0 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Espacios para Videos */
+        .video-placeholder {
+            background-color: #000000;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            margin: 30px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .video-placeholder .play-icon {
+            font-size: 45px;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+        }
+
+        /* Juego Interactivo */
+        .game-wrapper {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            margin-top: 50px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            text-align: center;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.5s ease-in; }
+
+        .block-grid { display: flex; flex-direction: column; gap: 12px; margin: 25px 0; }
+        .block {
+            background-color: #334155;
+            border: 2px solid #475569;
+            padding: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: left;
+            color: var(--text-main);
+        }
+
+        .block:hover { background-color: #475569; border-color: var(--primary); transform: translateX(8px); }
+        .block.selected { opacity: 0; pointer-events: none; height: 0; padding: 0; margin: 0; border: none; overflow: hidden; }
+
+        .sequence-area {
+            min-height: 250px;
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .sequence-item {
+            background-color: var(--primary);
+            color: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: left;
+            animation: popIn 0.3s ease-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .game-btn {
+            background-color: var(--primary);
+            color: var(--bg-color);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .game-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+        .btn-reset { background-color: transparent; border: 2px solid var(--text-muted); color: var(--text-muted); margin-left: 15px; box-shadow: none; }
+        .btn-reset:hover { background-color: var(--text-muted); color: var(--bg-color); transform: none; box-shadow: none; }
+
+        .feedback { margin-top: 20px; font-weight: bold; font-size: 18px; min-height: 27px; }
+        .feedback-error { color: var(--error); }
+        .feedback-success { color: var(--success); }
+
+        .progress-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .dot { width: 12px; height: 12px; background: #475569; border-radius: 50%; }
+        .dot.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- BOTÓN COHETE PARA DESPLEGAR SIDEBAR -->
+    <button class="rocket-btn" id="rocketToggle" title="Abrir Menú de Navegación">🚀</button>
+
+    <!-- OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- BARRA LATERAL DESPLEGABLE -->
+    <aside class="sidebar" id="sidebar">
+        <div class="user-box">
+            <h4>USUARIO ACTIVO</h4>
+            <p id="userEmailDisplay">Sin Iniciar Sesión</p>
+        </div>
+
+        <div class="progress-section">
+            <h3>Progreso del Curso</h3>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="overallProgressBar"></div>
+            </div>
+            <div class="progress-text" id="overallProgressText">0% Completado</div>
+        </div>
+
+        <ul class="nav-menu">
+            <li><a href="index.html">📌 Inicio / Menú</a></li>
+            <li>
+                <a href="modulo1.html">
+                    <span>Módulo I: Fundamentos</span>
+                    <span class="status-badge" id="m1Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo2.html" style="background-color: #2d3748;">
+                    <span>Módulo II: Automatización</span>
+                    <span class="status-badge" id="m2Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo3.html">
+                    <span>Módulo III: Práctica e IA</span>
+                    <span class="status-badge" id="m3Badge">Pendiente</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- CONTENIDO DEL MÓDULO II -->
+    <div class="container">
+
+        <header>
+            <h1>Módulo II: Diseño Eficiente + Automatización con n8n</h1>
+        </header>
+
+        <!-- VIDEO 1: INTRODUCCIÓN A REGISTRO Y CONFIGURACIÓN -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 1: Creación de Cuenta e Interfaz de n8n Cloud ]</strong></p>
+        </div>
+
+        <h2>Guía Paso a Paso: Creando tu cuenta en n8n Cloud</h2>
+        <p>Esta es la guía exacta que puedes poner en tu OVA, acompañada de capturas de pantalla de la página en cada paso.</p>
+
+        <h3>Paso 1: Ingresa a la página oficial</h3>
+        <p>Abre tu navegador favorito y dirígete a la página web oficial de n8n: <code>n8n.io</code>. En la esquina superior derecha, busca y haz clic en el botón que dice “Get Started”.</p>
+
+        <h3>Paso 2: Crea tus credenciales</h3>
+        <ul>
+            <li>Escribe tu correo electrónico personal, inventa una contraseña segura y haz clic en "Sign Up" (Registrarse).</li>
+            <li>Luego ingresa el código que envía n8n.</li>
+            <li>Llenamos los campos con nuestro nombre, contraseña, el nombre como nos vamos a ver y luego damos en <em>Start free 14-day trial</em>.</li>
+        </ul>
+
+        <h3>Paso 3: Responde las preguntas de bienvenida</h3>
+        <p>Como cualquier aplicación moderna, n8n te hará un par de preguntas rápidas para personalizar tu experiencia. Te preguntarán cosas como:</p>
+        <ul>
+            <li>¿Cuál es tu rol? (Puedes elegir "Other" o "Developer").</li>
+            <li>¿Para qué quieres usar n8n? (Puedes elegir "Personal use" o uso personal). No te preocupes mucho por esto, cualquier respuesta es válida para continuar.</li>
+        </ul>
+
+        <h3>Paso 4: ¡Bienvenido al lienzo!</h3>
+        <p>Si llegaste hasta aquí ¡listo! Hacemos clic en <em>start automating</em>.</p>
+        <p>¡Felicidades! Estás oficialmente dentro de n8n y listo para empezar a traducir la lógica que aprendimos en el módulo anterior a la vida real, hacemos clic en <em>Build a workflow</em> y es aquí donde iniciamos automatizaciones en n8n.</p>
+
+        <h2>Primera automatización en n8n</h2>
+
+        <h3>Paso 1: El Despertador (El Nodo Trigger)</h3>
+        <p>Como aprendimos, nada sucede sin un disparador. Para hacer nuestras pruebas, vamos a usar un trigger manual (como presionar un botón).</p>
+        <ul>
+            <li>En la pantalla de n8n: Haz clic en <strong>Add first step</strong>.</li>
+            <li>Busca y selecciona: <strong>Trigger manually</strong>.</li>
+        </ul>
+
+        <h3>Paso 2: La caja de información (El Nodo Edit Fields / Set)</h3>
+        <p>Antes de tomar una decisión, necesitamos la información. Aquí vamos a crear nuestra "variable" (la caja de la mudanza).</p>
+        <ul>
+            <li>En la pantalla: Haz clic en el signo (+) al lado de tu Trigger.</li>
+            <li>Busca y selecciona: El nodo <strong>Edit Fields (Set)</strong>.</li>
+            <li>Configuración: Vamos a crear una caja (<em>Add field</em>) llamada <code>Clima</code> y adentro le vamos a poner la palabra <code>Lluvia</code>.</li>
+        </ul>
+
+        <h3>Paso 3: La Bifurcación (El Nodo IF)</h3>
+        <p>Aquí aplicamos la lógica. Vamos a enseñarle a n8n a mirar dentro de la caja y tomar un camino.</p>
+        <ul>
+            <li>En la pantalla: Agrega un nuevo paso y busca el nodo <strong>IF</strong>.</li>
+            <li>Configuración: En la sección derecha buscamos <em>Edit fields</em> y buscamos <code>clima</code>.</li>
+            <li>Lo arrastramos a las condiciones en <em>value1</em> y en <em>value2</em> escribimos <code>lluvia</code>.</li>
+            <li><strong>Qué significa esto:</strong> Verás que el nodo IF automáticamente crea dos salidas en tu lienzo: <strong>True</strong> (Verdadero) y <strong>False</strong> (Falso).</li>
+        </ul>
+
+        <h3>Paso 4: La Acción Final (Nodos de Acción)</h3>
+        <p>¡Hora de actuar! Vamos a decirle a n8n qué hacer en cada caso. Para este primer ejercicio, haremos que el sistema nos arroje un simple mensaje de texto de regreso.</p>
+        <ul>
+            <li>En la rama <strong>True</strong> (Sí, está lloviendo): Agrega un nodo <strong>Edit Fields (Set)</strong>. Crea un campo llamado <code>Mensaje</code> y escribe: <em>"Lleva la sombrilla"</em>.</li>
+            <li>En la rama <strong>False</strong> (No está lloviendo): Agrega otro nodo <strong>Edit Fields (Set)</strong> en la salida inferior. Crea un campo llamado <code>Mensaje</code> y escribe: <em>"Ponte las gafas de sol"</em>.</li>
+        </ul>
+
+        <h3>Paso 5: ¡A ejecutar!</h3>
+        <ul>
+            <li>Haz clic en <strong>Execute Workflow</strong> (Ejecutar flujo).</li>
+            <li>Observa el resultado.</li>
+            <li>Ahora cambia el primer Edit Fields y cambia <code>lluvia</code> por <code>sol</code> para probar ambas rutas.</li>
+        </ul>
+
+        <!-- VIDEO 2: APIS Y JSON -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 2: Conceptos Claros de APIs, Endpoints y Estructuras JSON ]</strong></p>
+        </div>
+
+        <h2>¿Qué son las APIs y el JSON? (El Mesero y la Comanda)</h2>
+
+        <h3>El JSON: La nota del pedido (La Comanda)</h3>
+        <p>Ahora piensa en cómo el mesero anota tu pedido. Si escribe en su libreta: <em>"Quiero carne y también papas y de tomar un jugo, pero sin hielo y que la carne esté tres cuartos"</em>, el cocinero se va a volver loco leyendo ese párrafo.</p>
+        <p>Para no equivocarse, el mesero usa un formato organizado por casillas, algo así:</p>
+        <ul>
+            <li><strong>Plato fuerte:</strong> Carne</li>
+            <li><strong>Término:</strong> Tres cuartos</li>
+            <li><strong>Acompañamiento:</strong> Papas</li>
+            <li><strong>Bebida:</strong> Jugo</li>
+            <li><strong>Hielo:</strong> No</li>
+        </ul>
+        <p>Cualquier cocinero del mundo entiende esa nota de un solo vistazo porque está ordenada con una estructura de "Pregunta: Respuesta" (o Clave: Valor).</p>
+        <p><strong>El concepto técnico:</strong> Eso es un JSON. No es código de programación complejo; es simplemente texto organizado en una lista limpia para que n8n y cualquier otra aplicación del mundo puedan entender los datos rápidamente sin leer párrafos largos. Se escribe usando llaves <code>{}</code>, pero la lógica es exactamente la misma nota del mesero.</p>
+
+        <p><strong>Ajuste en el ejemplo del flujo anterior:</strong><br>
+        Ahora que ya conocen estos dos conceptos con comida, el paso 2 y 3 del flujo que armamos antes se entendería a la perfección:</p>
+        <ul>
+            <li><strong>Paso 2 (HTTP Request):</strong> Llamamos al "mesero" (API) del sistema de facturación para que nos traiga la lista de compras.</li>
+            <li><strong>Paso 3 (Split Out):</strong> El mesero nos trae la nota (JSON) con los datos organizados, y nosotros la desempacamos.</li>
+        </ul>
+
+        <h3>El JSON de una sola cosa (Un pedido de restaurante)</h3>
+        <p>Este es el formato cuando el "mesero" nos trae la información de un solo elemento. Mira cómo se usan las llaves <code>{}</code> para encerrar todo el pedido:</p>
+<pre>
+{
+  "id_pedido": 1024,
+  "cliente": "Carlos Mendoza",
+  "plato_fuerte": "Hamburguesa Especial",
+  "con_papas": true,
+  "bebida": "Jugo de Maracuyá",
+  "precio_total": 25500
+}
+</pre>
+        <ul>
+            <li>Las llaves <code>{}</code> significan: "Aquí empieza y aquí termina la nota del pedido".</li>
+            <li><code>true</code> significa Sí (es un dato de tipo Verdadero/Falso).</li>
+            <li>Los números (<code>1024</code> o <code>25500</code>) van sueltos, mientras que los textos van entre comillas <code>""</code>.</li>
+        </ul>
+
+        <h3>El JSON con una Lista (Para usar con el nodo Split Out)</h3>
+        <p>¿Qué pasa si el pedido tiene varios productos dentro? Aquí es donde aparecen los corchetes <code>[]</code>, que significan "Lista" (o Array).</p>
+<pre>
+{
+  "tienda": "Supermercado El Barrio",
+  "repartidor": "Yuber G.",
+  "productos_a_entregar": [
+    { "nombre": "Leche 1L", "cantidad": 2 },
+    { "nombre": "Pan Tajado", "cantidad": 1 },
+    { "nombre": "Café 500g", "cantidad": 1 }
+  ]
+}
+</pre>
+        <ul>
+            <li>Los corchetes <code>[]</code> son como una caja que guarda tarjetas adentro.</li>
+            <li>Aquí es donde el nodo Split Out hace su magia: rompe los corchetes <code>[]</code> y separa la Leche, el Pan y el Café en tres filas distintas en n8n.</li>
+        </ul>
+
+        <h3>La API: El mesero del restaurante</h3>
+        <p>Imagina que vas a un restaurante a comer. Tú te sientas en la mesa (tú eres n8n) y la cocina del restaurante es la otra aplicación (por ejemplo, Facebook o Google Sheets).</p>
+        <p>Tú no puedes entrar a la cocina a revisar la nevera ni a cocinar tú mismo, por higiene y seguridad. ¿Entonces cómo pides la comida? Usas un intermediario: el mesero.</p>
+        <ol>
+            <li>Tú le dices al mesero lo que quieres.</li>
+            <li>El mesero va a la cocina y lo pide.</li>
+            <li>La cocina prepara el plato y se lo da al mesero.</li>
+            <li>El mesero vuelve a tu mesa y te entrega la comida.</li>
+        </ol>
+        <p><strong>El concepto técnico:</strong> Eso es una API. Es un "mesero virtual" que permite que n8n le pida información a otra aplicación de forma segura, sin entrar a dañar sus sistemas por dentro. El nodo HTTP Request es simplemente el botón para llamar a ese mesero.</p>
+
+        <h3>Ejemplos de APIs (El lenguaje del "Mesero")</h3>
+        <p>En la vida real, una API no es un programa raro que se instala; para n8n, una API se ve casi igual que una dirección de una página web (URL). A estas direcciones las llamamos Endpoints (Puntos de contacto).</p>
+
+        <p><strong>Ejemplo 1: El método GET (Pedir información al mesero)</strong><br>
+        Imagínate que quieres saber cómo está el clima en tu ciudad. El nodo HTTP Request de n8n "llama" a esta dirección en internet:<br>
+        <code>GET https://api.clima.com/v1/bogota</code></p>
+        <ul>
+            <li><strong>Lo que hace n8n:</strong> Envía la solicitud (GET) a esa dirección.</li>
+            <li><strong>Lo que responde la API (El JSON de regreso):</strong></li>
+        </ul>
+<pre>
+{
+  "ciudad": "Bogotá",
+  "temperatura_celcius": 14,
+  "esta_lloviendo": true
+}
+</pre>
+        <p><strong>Conclusión:</strong> n8n lee ese <code>true</code> en el JSON y activa la ruta de la sombrilla.</p>
+
+        <p><strong>Ejemplo 2: El método POST (Llevarle información al mesero para que haga algo)</strong><br>
+        Ahora imagínate que quieres que n8n envíe un mensaje automático por WhatsApp o Telegram cada vez que alguien se registra. La dirección se vería algo así:<br>
+        <code>POST https://api.telegram.org/enviar_mensaje</code></p>
+        <ul>
+            <li><strong>Lo que hace n8n:</strong> Como es un POST, n8n no va a leer, va a entregar datos. n8n le envía este pequeño JSON a la API de Telegram:</li>
+        </ul>
+<pre>
+{
+  "chat_id": "987654321",
+  "texto_del_mensaje": "¡Hola! Tienes una nueva venta registrada."
+}
+</pre>
+        <ul>
+            <li><strong>Lo que hace la API:</strong> Telegram recibe el JSON, lee el número de chat, lee el texto y le hace sonar el celular al usuario con la notificación.</li>
+        </ul>
+
+        <h2>Explicación de Nodos Avanzados</h2>
+
+        <h3>Nodo Switch (El Clasificador de Correos)</h3>
+        <p>A veces la vida no es solo blanco o negro (Sí o No). A veces hay múltiples opciones.</p>
+        <p><strong>La experiencia cotidiana:</strong> Imagina que trabajas en una oficina de correos clasificando cartas. El nodo IF te serviría si solo preguntaras: ¿La carta es para Bogotá? (Sí/No). Pero eso es muy lento. En la vida real, miras la carta y dices: Si es Bogotá va a la caja 1, si es Medellín a la caja 2, y si es Cali a la caja 3.</p>
+        <p><strong>En n8n:</strong> El nodo Switch es una versión superpoderosa del IF. En lugar de tener solo dos salidas (True / False), te permite crear 3, 4 o la cantidad de caminos que necesites dependiendo del dato que llegue. Ejemplo: Si recibes un ticket de soporte, el Switch puede enviarlo por el camino de "Ventas", "Servicio Técnico" o "Facturación" según lo que pida el cliente.</p>
+
+        <h3>Split Out (Desempacar la maleta)</h3>
+        <p><em>(Nota técnica para el curso: Esta función suele encontrarse dentro del nodo "Item Lists" en n8n).</em></p>
+        <p><strong>La experiencia cotidiana:</strong> Imagina que llegas de viaje con una maleta llena. La maleta es un solo objeto pesado. Pero para lavar la ropa, no puedes meter la maleta entera a la lavadora; tienes que abrirla, sacar las prendas (camisas, pantalones, medias) y procesarlas una por una.</p>
+        <p><strong>En n8n:</strong> A veces, otras aplicaciones te envían la información "empacada" en un solo gran bloque (un arreglo o Array). El Split Out toma ese bloque único (la maleta) y lo "desempaca", separando cada elemento en partes individuales para que n8n pueda trabajar con cada uno por separado en los siguientes pasos.</p>
+
+        <h3>Nodo Merge (El Punto de Encuentro)</h3>
+        <p>Si podemos separar los caminos, también necesitamos poder volver a juntarlos.</p>
+        <p><strong>La experiencia cotidiana:</strong> Imagina que vas al cine con un amigo. Tú te vas en bicicleta y tu amigo en autobús (dos caminos diferentes). Pero ambos acordaron encontrarse en la misma puerta del cine a las 5:00 PM para entrar juntos a ver la película.</p>
+        <p><strong>En n8n:</strong> El nodo Merge hace exactamente eso. Toma dos o más ramas de tu flujo que estaban separadas y las une de nuevo en un solo camino. Puede hacer que el flujo "espere" a que ambos procesos terminen antes de continuar, o puede combinar la información de ambas ramas en una sola lista.</p>
+
+        <h3>HTTP Request (El Teléfono Universal)</h3>
+        <p>¿Qué pasa cuando no existe un nodo oficial para lo que necesitamos?</p>
+        <p><strong>La experiencia cotidiana:</strong> Imagina que quieres pedir comida a un restaurante local muy pequeño que no está en Rappi ni en ninguna aplicación. ¿Qué haces? Tomas tu teléfono, marcas su número directamente, haces tu pedido en el idioma que ellos entienden y esperas a que te confirmen.</p>
+        <p><strong>En n8n:</strong> El HTTP Request es tu teléfono universal. n8n tiene cientos de nodos preconstruidos (como Gmail o Telegram), pero si quieres conectarte a un software que no tiene nodo (por ejemplo, el sistema interno de tu empresa), usas el HTTP Request para "llamar" directamente a ese sistema a través de internet (usando su API) y pedirle o enviarle datos.</p>
+
+        <h3>Nodo Loop (La Cadena de Montaje)</h3>
+        <p>Para tareas repetitivas, dejamos que la máquina trabaje por nosotros.</p>
+        <p><strong>La experiencia cotidiana:</strong> Imagina que eres un profesor y tienes que calificar 30 exámenes. Tu cerebro no planifica 30 acciones diferentes. Tu cerebro crea un "ciclo": Tomas un examen, lo calificas, lo guardas. ¿Quedan exámenes? Sí. Entonces repites la acción. ¿Quedan exámenes? No. Entonces terminas y te vas a tomar un café.</p>
+        <p><strong>En n8n:</strong> El nodo Loop toma una lista de cosas (por ejemplo, 30 correos electrónicos sin leer) y hace que el flujo dé vueltas en un círculo, ejecutando una serie de acciones para el correo 1, luego para el correo 2, y así sucesivamente. Cuando termina con toda la lista, "rompe" el ciclo y continúa con el resto del flujo.</p>
+
+        <!-- VIDEO 3: PRÁCTICA GUIADA AVANZADA -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 3: Construcción del Flujo Avanzado en n8n ]</strong></p>
+        </div>
+
+        <h2>Configuración Paso a Paso del Flujo Avanzado en n8n</h2>
+
+        <h3>Paso 1: El Temporizador (Schedule Trigger)</h3>
+        <p>Este será nuestro punto de partida. No requiere que nadie pulse un botón; se ejecuta solo.</p>
+        <ul>
+            <li>Haz clic en <strong>Add first step</strong> y busca <strong>Schedule Trigger</strong>.</li>
+            <li>En la configuración del nodo, en el campo <em>Trigger Interval</em>, selecciona <strong>Daily</strong> (Diario).</li>
+            <li>Configura la hora (<em>Trigger at Hour</em>) a las <strong>7am</strong>.</li>
+            <li>Este nodo es el "despertador" que activa la oficina virtual todas las mañanas.</li>
+        </ul>
+        <img src="image_137236.png" alt="Schedule Trigger Configuración" class="step-img">[cite: 2]
+        <img src="image_1371f7.png" alt="Selección 7am Schedule Trigger" class="step-img">[cite: 3]
+
+        <h3>Paso 2: Llamando al Mesero (HTTP Request)</h3>
+        <p>Aquí es donde n8n viaja a internet a pedir la nota con las facturas del día anterior.</p>
+        <ul>
+            <li>Conecta un nuevo nodo y busca <strong>HTTP Request</strong>.</li>
+            <li>En <em>Method</em>, déjalo en <strong>GET</strong> (que significa "traer/leer información").</li>
+            <li>En <em>URL</em>, para el ejercicio usaremos la dirección: <code>https://dummyjson.com/carts</code></li>
+            <li>Al ejecutarlo (con datos de prueba), este nodo nos devolverá el famoso JSON: una lista organizada que contiene la información de todas las facturas.</li>
+        </ul>
+        <img src="image_1371dc.png" alt="Búsqueda nodo HTTP Request" class="step-img">[cite: 4]
+        <img src="image_13719b.png" alt="Listado HTTP Request" class="step-img">[cite: 5]
+        <img src="image_13717e.png" alt="Configuración URL HTTP Request" class="step-img">[cite: 6]
+        <img src="image_137161.png" alt="Lienzo Schedule Trigger conectado a HTTP Request" class="step-img">[cite: 7]
+        <img src="image_137143.png" alt="Resultado JSON de carts" class="step-img">[cite: 8]
+
+        <h3>Paso 3: Desempacar la Maleta (Split Out)</h3>
+        <p>La respuesta del mesero viene en un solo bloque. Necesitamos separar las facturas para revisarlas una por una.</p>
+        <ul>
+            <li>Agrega el nodo <strong>Split Out</strong> (en versiones recientes de n8n lo encuentras buscando directamente <em>Split Out</em> o dentro de <em>Item Lists</em>).</li>
+            <li>En el campo <em>Fields To Split Out</em> (Campo a desempacar), escribe el nombre de la lista que vino en el paso anterior: <code>carts</code> o arrastramos el ítem <code>carts</code>.</li>
+            <li>Al ejecutar este nodo, verás visualmente cómo n8n deja de mostrar un solo bloque grande y pasa a mostrar filas independientes (30 ítems).</li>
+        </ul>
+        <img src="image_13713e.png" alt="Añadir campo Split Out" class="step-img">[cite: 9]
+        <img src="image_137121.png" alt="Arrastrar carts a Split Out" class="step-img">[cite: 10]
+        <img src="image_136e7b.png" alt="Resultado de 30 ítems en Split Out" class="step-img">[cite: 11]
+
+        <h3>Paso 4: El Clasificador de 2 Caminos (Switch)</h3>
+        <p>Aquí es donde el flujo se divide por presupuestos, leyendo el valor total de cada carrito o factura.</p>
+        <ul>
+            <li>En la configuración del nodo Switch, en el campo <em>Data Type</em> (Tipo de dato), selecciona <strong>Number</strong> (Número).</li>
+            <li>En el campo <em>Value 1</em> (El dato a evaluar), arrastra el elemento llamado <code>total</code> desde la derecha, o escribe directamente: <code>{{ $json.carts.total }}</code>.</li>
+            <li>En la sección <em>Routing Rules</em> (Reglas de enrutamiento), configura las rutas:
+                <ul>
+                    <li><strong>Ruta 1:</strong> Selecciona <em>is less than</em> (Menor que) y escribe <code>1500</code>.</li>
+                    <li><strong>Ruta 2:</strong> Selecciona <em>is greater than or equal to</em> (Mayor o igual que) y escribe <code>1500</code>.</li>
+                </ul>
+            </li>
+            <li>Al cerrar la configuración, verás que el nodo Switch ahora tiene 2 conectores o puntos de salida en el lienzo. Si ejecutas el flujo, verás cómo los 30 elementos se dividen automáticamente entre los dos caminos según su valor.</li>
+        </ul>
+
+        <h3>Paso 5: El Punto de Encuentro (Merge)</h3>
+        <p>No importa si los gastos fueron bajos, medios o altos; al final del día necesitamos que todas las facturas vuelvan a unirse en una sola lista para no dejar ninguna por fuera del reporte final de la empresa.</p>
+        <ul>
+            <li>Agrega el nodo llamado <strong>Merge</strong> al lienzo.</li>
+            <li>En su configuración, asegúrate de que esté en el modo <strong>Append</strong> (que significa juntar o acumular los datos que le lleguen).</li>
+            <li>Ahora, haz clic y arrastra una flecha desde cada una de las 2 salidas del Switch y conéctalas todas a la entrada del nodo Merge. ¡Mágicamente los caminos se vuelven a unir en una sola autopista de información!</li>
+            <li>Al ejecutar este nodo, verás que en la salida vuelves a tener tus 30 elementos unificados en una sola lista limpia.</li>
+        </ul>
+
+        <h3>Paso 6: La Cadena de Montaje (Loop Over Items)</h3>
+        <p>Imagina que, de esa lista final unificada, solo queremos tomar las facturas del Camino 2 (las que están en ALERTA porque superan los $1500 USD) para procesar una acción repetitiva, como generar un aviso individual por cada una sin que el flujo se detenga.</p>
+        <ul>
+            <li>Agrega el nodo llamado <strong>Loop Over Items</strong> (Bucle sobre elementos).</li>
+            <li>Conecta la salida de la Ruta 2 (Gastos Altos) del Switch a la entrada de este nodo.</li>
+            <li>Este nodo se encargará de tomar los elementos y enviarlos uno por uno en un círculo hacia la acción que desees (como un nodo de enviar mensajes o correos).</li>
+            <li>Para cerrar el bucle, debes conectar la salida del nodo de acción de regreso a la entrada que dice <em>Loop</em> en este mismo nodo. Verás cómo se forma un circuito físico en tu pantalla.</li>
+            <li>Al ejecutarlo, n8n dará vueltas automáticamente procesando cada factura de forma individual hasta que la lista se quede vacía y el flujo termine con éxito.</li>
+        </ul>
+
+        <div style="background-color: var(--card-bg); border-left: 4px solid var(--success); padding: 15px; border-radius: 4px; margin: 30px 0;">
+            <p style="margin:0; font-weight: bold; color: var(--success);">
+                "¡Felicidades! Has construido un flujo avanzado con datos reales de internet. Has aprendido a traer datos con un mesero (API), leer su nota (JSON), desempacar la maleta (Split Out), tomar múltiples decisiones (Switch), unificar caminos (Merge) y repetir tareas (Loop). ¡Ya tienes superpoderes de automatización!"
+            </p>
+        </div>
+
+        <!-- EVALUACIÓN MÓDULO II: JUEGO LÓGICA BÁSICA -->
+        <div class="game-wrapper">
+            <div id="pantalla-0" class="screen active">
+                <h1>Pensamiento Lógico y Automatización</h1>
+                <h3>Módulo II: Reto de Procesamiento de Datos</h3>
+                <p>En este reto ponerás a prueba la secuencia lógica para estructurar y clasificar flujos de información complejos en n8n.</p>
+                <p>Resuelve los 3 escenarios en el orden natural de la automatización.</p>
+                <p><strong>Regla de oro:</strong> Inicio (Disparador) ➔ Pregunta (Condición) ➔ Camino Sí ➔ Camino No ➔ Fin (Acción).</p>
+                <button class="game-btn" onclick="iniciarJuego()">Iniciar Nivel 1</button>
+            </div>
+
+            <div id="pantalla-1" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+                <h1>Reto 1: La Mañana</h1>
+                <p>Ordena los bloques para crear tu rutina de inicio de día.</p>
+                
+                <div class="block-grid" id="opciones-nivel-1">
+                    <div class="block" onclick="seleccionarBloque(1, 'A', '[Camino SÍ] Preparar un café doble.')">[Camino SÍ] Preparar un café doble.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'B', '[Condición] ¿Tengo mucho sueño todavía?')">[Condición] ¿Tengo mucho sueño todavía?</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'C', '[Acción Final] Bañarse y salir al trabajo.')">[Acción Final] Bañarse y salir al trabajo.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'D', '[Disparador] Suena la alarma a las 6:00 AM.')">[Disparador] Suena la alarma a las 6:00 AM.</div>
+                    <div class="block" onclick="seleccionarBloque(1, 'E', '[Camino NO] Hacer 15 min de ejercicio.')">[Camino NO] Hacer 15 min de ejercicio.</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-1"></div>
+                <div id="feedback-1" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(1)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-1" style="display:none;" onclick="siguientePantalla(2)">Ir al Reto 2</button>
+            </div>
+
+            <div id="pantalla-2" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot active"></div><div class="dot"></div></div>
+                <h1>Reto 2: La Cena</h1>
+                <p>Llegas tarde a casa. Ordena los pasos lógicos para resolver tu cena.</p>
+                
+                <div class="block-grid" id="opciones-nivel-2">
+                    <div class="block" onclick="seleccionarBloque(2, 'A', '[Disparador] Llegas a casa con mucha hambre a las 7:00 PM.')">[Disparador] Llegas a casa con mucha hambre a las 7:00 PM.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'B', '[Acción Final] Comer, lavar los platos y descansar.')">[Acción Final] Comer, lavar los platos y descansar.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'C', '[Camino SÍ] Sacar ingredientes y cocinar.')">[Camino SÍ] Sacar ingredientes y cocinar.</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'D', '[Condición] ¿Hay comida en la nevera?')">[Condición] ¿Hay comida en la nevera?</div>
+                    <div class="block" onclick="seleccionarBloque(2, 'E', '[Camino NO] Pedir una pizza a domicilio.')">[Camino NO] Pedir una pizza a domicilio.</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-2"></div>
+                <div id="feedback-2" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(2)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-2" style="display:none;" onclick="siguientePantalla(3)">Ir al Reto 3</button>
+            </div>
+
+            <div id="pantalla-3" class="screen">
+                <div class="progress-bar"><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div></div>
+                <h1>Reto 3: La Lavandería</h1>
+                <p>Es hora de lavar. Ordena el proceso para no dañar la ropa.</p>
+                
+                <div class="block-grid" id="opciones-nivel-3">
+                    <div class="block" onclick="seleccionarBloque(3, 'A', 'Usar ciclo de ropa oscura y agua fría.')">Usar ciclo de ropa oscura y agua fría.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'B', 'Sacar la ropa y tenderla para secar.')">Sacar la ropa y tenderla para secar.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'C', 'La cesta de ropa sucia está llena.')">La cesta de ropa sucia está llena.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'D', 'Usar ciclo de blancos y un poco de cloro.')">Usar ciclo de blancos y un poco de cloro.</div>
+                    <div class="block" onclick="seleccionarBloque(3, 'E', 'Revisar: ¿Es una carga de ropa blanca?')">Revisar: ¿Es una carga de ropa blanca?</div>
+                </div>
+
+                <div class="sequence-area" id="secuencia-nivel-3"></div>
+                <div id="feedback-3" class="feedback"></div>
+                
+                <button class="game-btn btn-reset" onclick="reiniciarNivel(3)">Deshacer todo</button>
+                <button class="game-btn" id="btn-next-3" style="display:none;" onclick="siguientePantalla(4)">Finalizar Módulo II</button>
+            </div>
+
+            <div id="pantalla-4" class="screen">
+                <h1>¡Felicidades! 🎉</h1>
+                <h3>Has aprobado la evaluación del Módulo II</h3>
+                <p>Has demostrado dominar la estructura de datos en JSON, la conexión con APIs mediante HTTP Request, el desempaque con Split Out y la lógica de decisión condicional y repetitiva con Switch, Merge y Loop.</p>
+                <p>¡Tu avance ha sido guardado exitosamente!</p>
+                
+                <button class="game-btn" onclick="location.reload()" style="margin-top: 30px;">Volver a Jugar</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // --- LÓGICA DE DESPLEGABLE SIDEBAR ---
+    const rocketToggle = document.getElementById('rocketToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('active');
+    }
+
+    rocketToggle.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    // --- ACTUALIZACIÓN DE USUARIO Y PROGRESO ---
+    function updateProgressUI() {
+        const user = localStorage.getItem('n8n_user_email');
+        if (user) {
+            document.getElementById('userEmailDisplay').innerText = user;
+        }
+
+        const progress = JSON.parse(localStorage.getItem('n8n_progress')) || { m1: false, m2: false, m3: false };
+        let completedCount = 0;
+        
+        if (progress.m1) { completedCount++; document.getElementById('m1Badge').innerText = 'Completado'; document.getElementById('m1Badge').classList.add('completed'); }
+        if (progress.m2) { completedCount++; document.getElementById('m2Badge').innerText = 'Completado'; document.getElementById('m2Badge').classList.add('completed'); }
+        if (progress.m3) { completedCount++; document.getElementById('m3Badge').innerText = 'Completado'; document.getElementById('m3Badge').classList.add('completed'); }
+
+        const percentage = Math.round((completedCount / 3) * 100);
+        document.getElementById('overallProgressBar').style.width = percentage + '%';
+        document.getElementById('overallProgressText').innerText = percentage + '% Completado';
+    }
+
+    // --- LÓGICA DEL JUEGO INTERACTIVO ---
+    let secuenciaActual = [];
+    
+    const respuestasCorrectas = {
+        1: ['D', 'B', 'A', 'E', 'C'],
+        2: ['A', 'D', 'C', 'E', 'B'],
+        3: ['C', 'E', 'D', 'A', 'B']
+    };
+
+    function iniciarJuego() {
+        document.getElementById('pantalla-0').classList.remove('active');
+        document.getElementById('pantalla-1').classList.add('active');
+    }
+
+    function siguientePantalla(num) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('pantalla-' + num).classList.add('active');
+        secuenciaActual = []; 
+    }
+
+    function seleccionarBloque(nivel, id, texto) {
+        if(secuenciaActual.length >= 5) return;
+        
+        event.target.classList.add('selected');
+        
+        secuenciaActual.push(id);
+        const area = document.getElementById('secuencia-nivel-' + nivel);
+        const item = document.createElement('div');
+        item.className = 'sequence-item';
+        
+        item.innerText = secuenciaActual.length + ". " + texto;
+        area.appendChild(item);
+
+        if(secuenciaActual.length === 5) {
+            validarNivel(nivel);
+        }
+    }
+
+    function validarNivel(nivel) {
+        const feedback = document.getElementById('feedback-' + nivel);
+        const botonSiguiente = document.getElementById('btn-next-' + nivel);
+        
+        if(JSON.stringify(secuenciaActual) === JSON.stringify(respuestasCorrectas[nivel])) {
+            feedback.innerHTML = '<span class="feedback-success">¡Excelente! El flujo lógico es correcto. ✅</span>';
+            botonSiguiente.style.display = 'inline-block';
+
+            // Al superar el último nivel, marcar Módulo II como completado en el localStorage
+            if (nivel === 3) {
+                let progress = JSON.parse(localStorage.getItem('n8n_progress')) || {};
+                progress.m2 = true;
+                localStorage.setItem('n8n_progress', JSON.stringify(progress));
+                updateProgressUI();
+            }
+        } else {
+            feedback.innerHTML = '<span class="feedback-error">Mmm, la secuencia no es lógica. Piensa en el orden natural y vuelve a intentar. ❌</span>';
+        }
+    }
+
+    function reiniciarNivel(nivel) {
+        secuenciaActual = [];
+        document.getElementById('secuencia-nivel-' + nivel).innerHTML = '';
+        document.getElementById('feedback-' + nivel).innerHTML = '';
+        document.getElementById('btn-next-' + nivel).style.display = 'none';
+        
+        const bloques = document.getElementById('opciones-nivel-' + nivel).children;
+        for(let b of bloques) {
+            b.classList.remove('selected');
+        }
+    }
+
+    window.onload = updateProgressUI;
+</script>
+</body>
+</html>

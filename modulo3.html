@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo III - Curso de Automatización con n8n</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --sidebar-bg: #161b26;
+            --primary: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #22c55e;
+            --accent-orange: #ff6d5a;
+
+            /* Estilos del Simulador */
+            --panel-bg: #1e293b;
+            --canvas-bg: #0b1120;
+            --n8n-red: #ea4645;
+            --n8n-red-hover: #ff5a59;
+            --border: #334155;
+            --dropzone-bg: rgba(30, 41, 59, 0.5);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            display: flex;
+        }
+
+        /* --- BOTÓN FLOTANTE COHETE --- */
+        .rocket-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background-color: var(--accent-orange);
+            color: #fff;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(255, 109, 90, 0.4);
+            transition: transform 0.3s ease, background-color 0.2s;
+        }
+
+        .rocket-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            background-color: #e05543;
+        }
+
+        /* --- BARRA LATERAL (SIDEBAR) COLAPSABLE --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #2d3748;
+            padding: 5rem 1rem 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            left: -280px; /* Escondida por defecto */
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.open {
+            left: 0; /* Desplegada al hacer clic */
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Usuario y Progreso */
+        .user-box {
+            background-color: #0f1219;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+            margin-bottom: 1.5rem;
+        }
+        .user-box h4 { margin: 0 0 0.5rem 0; color: var(--accent-orange); font-size: 0.85rem; }
+        .user-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; }
+
+        .progress-section { margin-bottom: 2rem; }
+        .progress-section h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .progress-bar-bg {
+            background-color: #2d3748;
+            border-radius: 10px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: var(--success);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-text { font-size: 0.8rem; text-align: right; margin-top: 0.3rem; color: var(--success); font-weight: bold; }
+
+        /* Menú de Navegación */
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-menu li { margin-bottom: 0.5rem; }
+        .nav-menu a {
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .nav-menu a:hover { background-color: #2d3748; }
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            background-color: #334155;
+            color: #fff;
+        }
+        .status-badge.completed { background-color: var(--success); }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 40px 20px 40px 80px;
+            flex-grow: 1;
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: var(--accent-orange); margin-top: 35px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        h3 { color: var(--primary); margin-top: 25px; }
+
+        p, li { font-size: 1.05rem; color: #cbd5e1; }
+        ul, ol { margin-left: 20px; }
+
+        code {
+            background-color: #0f1219;
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        pre {
+            background-color: #0f1219;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        /* Espacios para Videos */
+        .video-placeholder {
+            background-color: #000000;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            margin: 30px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .video-placeholder .play-icon {
+            font-size: 45px;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+        }
+
+        /* Tablas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #334155;
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: var(--primary);
+        }
+
+        /* --- ESTILOS DEL SIMULADOR DRAG & DROP --- */
+        .simulator-wrapper {
+            background-color: var(--card-bg);
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            margin-top: 50px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            user-select: none;
+        }
+
+        .sim-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .sim-header h2 {
+            color: var(--n8n-red);
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            border-bottom: none;
+        }
+
+        .sim-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .node-palette {
+            background-color: #141b2d;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-height: 100px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas {
+            background-color: var(--canvas-bg);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 30px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 180px;
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .node {
+            background-color: #2a374a;
+            border-left: 5px solid var(--n8n-red);
+            border-radius: 6px;
+            padding: 10px 12px;
+            width: 160px;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #fff;
+        }
+
+        .node:active { cursor: grabbing; transform: scale(0.95); }
+        .node.dragging { opacity: 0.5; border: 2px dashed var(--n8n-red); }
+
+        .dropzone {
+            width: 165px;
+            height: 75px;
+            background-color: var(--dropzone-bg);
+            border: 2px dashed var(--text-muted);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .dropzone.hovered {
+            background-color: rgba(234, 70, 69, 0.2);
+            border-color: var(--n8n-red);
+            transform: scale(1.03);
+        }
+
+        .arrow {
+            color: var(--text-muted);
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .sim-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .sim-btn {
+            background-color: var(--n8n-red);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(234, 70, 69, 0.3);
+        }
+
+        .sim-btn:hover { background-color: var(--n8n-red-hover); transform: translateY(-2px); }
+
+        .console-output {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 650px;
+            min-height: 60px;
+            display: none;
+            text-align: left;
+            font-size: 0.9rem;
+            border: 1px solid #333;
+        }
+
+        /* Cuestionario de Opción Múltiple */
+        .quiz-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .quiz-option {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .quiz-option input { margin-right: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- BOTÓN COHETE PARA DESPLEGAR SIDEBAR -->
+    <button class="rocket-btn" id="rocketToggle" title="Abrir Menú de Navegación">🚀</button>
+
+    <!-- OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- BARRA LATERAL DESPLEGABLE -->
+    <aside class="sidebar" id="sidebar">
+        <div class="user-box">
+            <h4>USUARIO ACTIVO</h4>
+            <p id="userEmailDisplay">Sin Iniciar Sesión</p>
+        </div>
+
+        <div class="progress-section">
+            <h3>Progreso del Curso</h3>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="overallProgressBar"></div>
+            </div>
+            <div class="progress-text" id="overallProgressText">0% Completado</div>
+        </div>
+
+        <ul class="nav-menu">
+            <li><a href="index.html">📌 Inicio / Menú</a></li>
+            <li>
+                <a href="modulo1.html">
+                    <span>Módulo I: Fundamentos</span>
+                    <span class="status-badge" id="m1Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo2.html">
+                    <span>Módulo II: Automatización</span>
+                    <span class="status-badge" id="m2Badge">Pendiente</span>
+                </a>
+            </li>
+            <li>
+                <a href="modulo3.html" style="background-color: #2d3748;">
+                    <span>Módulo III: Práctica e IA</span>
+                    <span class="status-badge" id="m3Badge">Pendiente</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- CONTENIDO DEL MÓDULO III -->
+    <div class="container">
+
+        <header>
+            <h1>Módulo III: Implementación Práctica, Inteligencia Artificial y Gestión de Fallos en n8n</h1>
+        </header>
+
+        <p>En este módulo, aprenderemos a darle "manos" a nuestro flujo para que hable con otras aplicaciones, un "cerebro" para que piense, y un "sistema de emergencias" por si algo sale mal en internet.</p>
+
+        <!-- VIDEO 1: INTEGRACIONES E INTELIGENCIA ARTIFICIAL -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 1: Conexión con IA (OpenAI), Credenciales y Servicios de Mensajería ]</strong></p>
+        </div>
+
+        <h2>Aplicaciones e IA</h2>
+        <p>Ya sabemos que la API es el "mesero" que nos trae la información. Ahora vamos a ver a qué superordenadores o servicios le vamos a pedir cosas:</p>
+
+        <h3>OpenAI API (El Consultor Experto)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Imagina que en el restaurante contratamos a un chef con tres estrellas Michelin. No solo toma el pedido, sino que, si le das una lista de ingredientes al azar, te inventa una receta espectacular en segundos.</li>
+            <li><strong>En n8n:</strong> La API de OpenAI nos permite conectarnos con ChatGPT. Gracias a esto, n8n puede leer un correo enojado de un cliente, entender el motivo del enojo, redactar una disculpa perfecta y categorizar el problema sin que un humano intervenga.</li>
+        </ul>
+
+        <h3>Gmail y WhatsApp (El Cartero y el Mensajero Instantáneo)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Son las herramientas de entrega. Gmail es el cartero tradicional que lleva cartas formales en sobres (correos con archivos adjuntos), y WhatsApp es el mensajero en moto que te entrega un mensaje rápido directamente en la mano (notificaciones instantáneas al celular).</li>
+            <li><strong>En n8n:</strong> Son los nodos de salida preferidos. Con ellos, n8n puede avisarle a un cliente que su pedido va en camino o enviarle un reporte en PDF a la gerencia cada viernes.</li>
+        </ul>
+
+        <h3>API Key (El Carnet de Identidad / Pase VIP)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Como OpenAI, Gmail o WhatsApp son servicios privados, el "mesero" no te va a dar información así porque sí. Necesitas mostrarle tu API Key, que es como un carnet de seguridad con chip o un pase VIP. Si el chip es válido, te abren la puerta; si no, te botan del edificio.</li>
+            <li><strong>En n8n:</strong> Es una contraseña larga llena de letras y números que nos da la aplicación (por ejemplo, OpenAI) para que la peguemos en n8n. Así, n8n demuestra que tiene permiso para usar esa cuenta de forma segura.</li>
+        </ul>
+
+        <!-- VIDEO 2: RESILIENCIA Y GESTIÓN DE ERRORES -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 2: Manejo de Errores, Reintentos, Logging y Workflows de Emergencia ]</strong></p>
+        </div>
+
+        <h2>¿Qué pasa si internet falla?</h2>
+        <p>En el mundo real, los servidores se caen, el Wi-Fi parpadea y las aplicaciones fallan. Un buen diseñador de automatizaciones no es el que hace un flujo que funciona cuando todo está bien, sino el que sabe qué hacer cuando todo sale mal.</p>
+
+        <h3>Reintentos (La Perseverancia)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Vas a llamar a un amigo por teléfono y te sale "línea ocupada". No te rindes de inmediato; esperas un minuto y vuelves a marcar. Eso es un reintento.</li>
+            <li><strong>En n8n:</strong> Si el nodo de WhatsApp intenta enviar un mensaje, pero los servidores de Meta están caídos por un segundo, podemos configurar el nodo para que diga: <em>"No te mueras, espera 5 segundos y vuelve a intentar hasta 3 veces antes de declararte en error"</em>.</li>
+        </ul>
+
+        <h3>Workflow de Error (El Protocolo de Emergencia)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Es el plan de evacuación de un edificio. Si suena la alarma de incendios, nadie se queda congelado; todos saben por cuál escalera bajar y dónde reunirse.</li>
+            <li><strong>En n8n:</strong> Es un flujo secundario especial. Si un nodo falla definitivamente (por ejemplo, se acabó el saldo de la API de OpenAI), este flujo se activa inmediatamente para salvar el día: apaga el proceso principal de forma segura y le envía un correo urgente al administrador diciendo: <em>"¡Auxilio, el flujo de facturación se detuvo en el paso 4!"</em>.</li>
+        </ul>
+
+        <h3>Logging (La Bitácora de Vuelo / Caja Negra)</h3>
+        <ul>
+            <li><strong>La Analogía:</strong> Es como la caja negra de un avión o el cuaderno de notas del vigilante de un edificio. Anota absolutamente todo lo que pasa: <em>"7:00 AM: Todo normal. 7:05 AM: Entró el usuario Carlos. 7:10 AM: Se cayó la conexión por 2 segundos"</em>.</li>
+            <li><strong>En n8n:</strong> El Logging es el registro histórico de ejecuciones. Si un flujo falló a las 3:00 AM mientras todos dormían, el estudiante puede ir al historial, leer los logs y descubrir exactamente qué dato causó el daño.</li>
+        </ul>
+
+        <div style="background-color: var(--card-bg); border-left: 4px solid var(--primary); padding: 15px; border-radius: 6px; margin: 25px 0;">
+            <p style="margin: 0; font-style: italic;"> Un cliente escribe por WhatsApp. n8n recibe el mensaje usando la API Key de la empresa, le pasa el texto a la API de OpenAI para que redacte una respuesta amable, y luego intenta enviarla por Gmail. Si el correo falla porque el internet parpadeó, el sistema activa los Reintentos. Si aun así no funciona, se dispara el Workflow de Error, manda una alerta y todo queda registrado en el Logging para que se revise al día siguiente.</p>
+        </div>
+
+        <!-- VIDEO 3: CASO PRÁCTICO E INTEGRACIÓN CON SHEETS Y GMAIL -->
+        <div class="video-placeholder">
+            <div class="play-icon">▶</div>
+            <p><strong>[ Espacio Reservado para Video 3: Construcción Paso a Paso del Asistente Virtual Inteligente ]</strong></p>
+        </div>
+
+        <h2>Caso Práctico: El Asistente Virtual Inteligente</h2>
+        
+        <h3>El Objetivo del Flujo</h3>
+        <p>Cada vez que un cliente escriba un correo electrónico con una queja, un reclamo o una felicitación, la Inteligencia Artificial (OpenAI) leerá el mensaje, analizará el sentimiento del cliente, redactará una respuesta sumamente pulida y empática, y el sistema la enviará de vuelta por correo y notificará al equipo por WhatsApp de inmediato. ¡Todo en menos de 5 segundos!</p>
+
+        <h3>El Mapa del Flujo en la Nube</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Gmail Trigger</th>
+                    <th>➔</th>
+                    <th>OpenAI Node</th>
+                    <th>➔</th>
+                    <th>Gmail Send</th>
+                    <th>➔</th>
+                    <th>WhatsApp/Telegram Node</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Llega correo</td>
+                    <td></td>
+                    <td>Cerebro IA</td>
+                    <td></td>
+                    <td>Responde al cliente</td>
+                    <td></td>
+                    <td>Alerta al equipo</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Paso 1: El Disparador (Gmail Trigger)</h3>
+        <p>Aquí es donde el flujo se "despierta" cada vez que ocurre algo en el mundo real.</p>
+        <ul>
+            <li><strong>La Aplicación:</strong> Conectamos nuestra cuenta de correo.</li>
+            <li><strong>La Acción:</strong> Configuramos el nodo para que se active únicamente cuando llegue un correo nuevo a la bandeja de entrada que tenga en el asunto la palabra "Soporte" o "Ayuda". Buscamos <em>filters</em>, elegimos <em>Search</em> y escribimos <code>subject:(ayuda OR soporte)</code> o se escribe en mayúsculas.</li>
+            <li><strong>El Resultado:</strong> El nodo recibe el correo y extrae dos datos clave en su JSON: el texto que escribió el cliente y su dirección de correo.</li>
+        </ul>
+
+        <h3>Paso 2: El Cerebro (Nodo OpenAI)</h3>
+        <ul>
+            <li>Aquí es donde n8n le pasa la nota del pedido a nuestro "chef experto". Buscamos <strong>OpenAI</strong>.</li>
+            <li>Dentro de OpenAI buscamos <strong>Message a Model</strong>.</li>
+            <li>Aquí hemos creado ya nuestras herramientas para programar nuestro agente OpenAI. En <em>Credential</em> usaremos la que viene por defecto: <code>n8n free OpenAI API</code>.</li>
+            <li>En <em>Model</em> elegimos la versión <strong>gpt-4o-mini</strong> o la versión 5 mini según esté disponible.</li>
+            <li><strong>La Acción:</strong> Bajamos a <em>Messages</em>, elegimos <em>prompt</em> y le escribimos el siguiente mensaje:
+                <pre>Actúa como un experto en servicio al cliente. Lee el siguiente correo. Analiza lo que pide el cliente y redacta una respuesta muy amable, profesional y en español solucionando su duda.</pre>
+            </li>
+            <li><strong>El Resultado:</strong> OpenAI procesa el texto y nos entrega un JSON con la respuesta perfecta ya redactada.</li>
+        </ul>
+
+        <h3>Paso 3: La Respuesta (Nodo Gmail - Send a message)</h3>
+        <p>El cartero entra en acción para devolver el paquete.</p>
+        <ul>
+            <li><strong>La Aplicación:</strong> Usamos el nodo de Gmail, pero esta vez con la acción de enviar.</li>
+            <li><strong>La Configuración:</strong>
+                <ul>
+                    <li>En el campo <strong>To (Para)</strong>, arrastramos el correo del cliente que llegó en el Paso 1, buscamos en INPUT parte izquierda y aquí en Gmail Trigger arrastramos <em>From</em>. O escribimos: <code>{{ $('Gmail Trigger').item.json.From }}</code></li>
+                    <li>En el campo <strong>Body (Cuerpo del mensaje)</strong>, arrastramos el texto inteligente que redactó OpenAI en el Paso 2 <code>text</code>.</li>
+                </ul>
+            </li>
+            <li><strong>El Resultado:</strong> El cliente recibe en su bandeja de entrada una respuesta inmediata y personalizada.</li>
+        </ul>
+
+        <h3>Paso 4: El Tablero de Control Automático (Google Sheets)</h3>
+        <p>Para cerrar con broche de oro, no podemos dejar que los datos se pierdan en el aire. n8n tomará un registro de cada correo atendido por la IA y lo anotará automáticamente en una hoja de cálculo de Google. Así, el equipo humano tendrá un tablero en tiempo real para supervisar las respuestas del bot.</p>
+
+        <p><strong>Preparación en Google Drive (10 segundos):</strong></p>
+        <ol>
+            <li>Entra a tu Google Drive, seleccionamos <em>Mi Unidad</em> y crea una nueva Hoja de cálculo de Google (Google Sheet).</li>
+            <li>Ponle como título: <code>Registro de Soporte IA</code>.</li>
+            <li>En la primera fila, crea tres columnas con estos títulos:
+                <ul>
+                    <li><strong>Columna A:</strong> Fecha y Hora</li>
+                    <li><strong>Columna B:</strong> Cliente</li>
+                    <li><strong>Columna C:</strong> Estado de la IA</li>
+                </ul>
+            </li>
+        </ol>
+
+        <p><strong>Configuración en n8n:</strong></p>
+        <ul>
+            <li>En el lienzo, haz clic en el signo (+) al lado de tu nodo de Gmail y busca <strong>Google Sheets</strong> y <em>Create Spreadsheet / Append Row</em>.</li>
+            <li>Ingresamos con la cuenta de Google y debe aparecer <code>Google Sheets OAuth2 API</code>.</li>
+            <li>En <em>Credential</em>, selecciona la misma cuenta de Google que ya vinculaste en los pasos anteriores. ¡Listo el pase VIP!</li>
+            <li>En <em>Resource</em>, asegúrate de que esté en <strong>Spreadsheet</strong>.</li>
+            <li>En <em>Operation</em>, selecciona <strong>Append Row</strong> (Añadir fila), que le indica a n8n que escriba un dato nuevo abajo del anterior sin borrar nada.</li>
+            <li>En <em>Document</em>, haz clic en el buscador y selecciona tu hoja llamada <code>Registro de Soporte IA</code>.</li>
+            <li>En <em>Sheet</em>, selecciona <code>Hoja 1</code>.</li>
+            <li><strong>Mapeando las columnas (Los datos dinámicos):</strong> n8n leerá tus columnas automáticamente. Ahora solo debes arrastrar los datos del panel derecho dentro de cada casilla:
+                <ul>
+                    <li>En <strong>Fecha y Hora:</strong> Arrastra la fecha del correo <code>{{ $now }}</code></li>
+                    <li>En <strong>Cliente:</strong> Arrastra el nombre o correo de la persona <code>{{ $('Gmail Trigger').item.json.From }}</code></li>
+                    <li>En <strong>Estado de la IA:</strong> Escribe un texto fijo o dinámico como: <code>Respuesta enviada automáticamente.</code></li>
+                </ul>
+            </li>
+            <li>Haz clic en <strong>Execute step</strong>.</li>
+        </ul>
+
+        <p>¡Abre tu hoja de cálculo en Drive! Verás cómo el robot acaba de escribir la fila en tiempo real con los datos exactos del correo.</p>
+
+        <p><strong>¡Felicidades! Has creado un ecosistema empresarial automatizado y profesional sin salir de la nube:</strong></p>
+        <ul>
+            <li><strong>Gmail (Trigger):</strong> Detecta el problema del cliente.</li>
+            <li><strong>OpenAI (Brain):</strong> Analiza y redacta la solución técnica.</li>
+            <li><strong>Gmail (Output):</strong> Le envía la respuesta al cliente de inmediato.</li>
+            <li><strong>Google Sheets (Log):</strong> Registra la operación en la base de datos de la empresa para auditoría humana.</li>
+        </ul>
+
+        <h2>Taller Práctico Integrador: El Optimizador de Ventas VIP con IA</h2>
+        
+        <h3>El Escenario del Mundo Real</h3>
+        <p>Trabajas como Ingeniero de Automatización para una tienda de comercio electrónico internacional. La gerencia te pide un sistema automático que se ejecute todas las mañanas para:</p>
+        <ol>
+            <li>Descargar las órdenes de compra del día anterior desde su base de datos (API).</li>
+            <li>Clasificar los carritos de compra: los clientes que gastaron más de $1500 USD son considerados <strong>Clientes VIP</strong>.</li>
+            <li>Pasar los datos de los carritos VIP por una Inteligencia Artificial para redactar un correo con un bono de regalo personalizado.</li>
+            <li>Guardar un registro de auditoría de todos los movimientos en una hoja de Google Sheets.</li>
+            <li>Enviar el correo personalizado al cliente VIP a través de Gmail.</li>
+        </ol>
+
+        <h3>🛠️ Requisitos previos para el estudiante</h3>
+        <p>Antes de iniciar, asegúrate de tener a la mano:</p>
+        <ul>
+            <li>Tu cuenta de n8n activa en la nube.</li>
+            <li>Una cuenta de Google (Drive, Sheets y Gmail).</li>
+            <li>Tu API Key de OpenAI configurada en n8n.</li>
+            <li>Una hoja de cálculo en Google Drive llamada <code>Auditoría de Ventas</code> con las columnas: <strong>ID Carrito</strong>, <strong>Total Compra</strong>, <strong>Categoría</strong> y <strong>Mensaje IA</strong>.</li>
+        </ul>
+
+        <h3>🚀 El Desafío: Estructura del Flujo</h3>
+        <p>El estudiante deberá construir un flujo en su lienzo de n8n que tenga la siguiente estructura visual:</p>
+<pre>
+[Schedule Trigger] ➔ [HTTP Request] ➔ [Split Out] ➔ [Switch]
+                                                     ├──> (Ruta VIP > 1500) ➔ [OpenAI] ➔ [Google Sheets] ➔ [Gmail Send]
+                                                     └──> (Ruta Normal ≤ 1500) ➔ [Google Sheets (Solo registro)]
+</pre>
+
+        <!-- CUESTIONARIO TÉCNICO AVANZADO DEL MÓDULO III -->
+        <div class="quiz-card">
+            <h3 style="margin-top:0; color:var(--primary);">📝 Cuestionario de Arquitectura e Inteligencia Artificial</h3>
+            <p><strong>Pregunta 1:</strong> ¿Cuál es la función principal de una API Key al integrar OpenAI o WhatsApp en n8n?</p>
+            <label class="quiz-option"><input type="radio" name="q1_m3" value="a"> Modificar los colores y la apariencia gráfica de los nodos.</label>
+            <label class="quiz-option"><input type="radio" name="q1_m3" value="b"> Servir como un token o carnet de autenticación seguro que autoriza a n8n a usar el servicio.</label>
+            <label class="quiz-option"><input type="radio" name="q1_m3" value="c"> Aumentar la velocidad de conexión a internet de la máquina local.</label>
+
+            <p style="margin-top:1.5rem;"><strong>Pregunta 2:</strong> Si una API externa falla por una caída momentánea del servidor, ¿qué mecanismo evita que el flujo falle inmediatamente?</p>
+            <label class="quiz-option"><input type="radio" name="q2_m3" value="a"> La función de Reintentos (Retry on Fail) configurada en el nodo.</label>
+            <label class="quiz-option"><input type="radio" name="q2_m3" value="b"> Eliminar el nodo y volver a conectarlo.</label>
+            <label class="quiz-option"><input type="radio" name="q2_m3" value="c"> El nodo Split Out.</label>
+
+            <p style="margin-top:1.5rem;"><strong>Pregunta 3:</strong> ¿Qué diferencia existe entre un Workflow de Error y el Logging?</p>
+            <label class="quiz-option"><input type="radio" name="q3_m3" value="a"> No hay diferencia, ambos hacen lo mismo.</label>
+            <label class="quiz-option"><input type="radio" name="q3_m3" value="b"> El Workflow de Error ejecuta acciones de contingencia automáticas ante un fallo, mientras que el Logging registra la bitácora histórica de lo sucedido.</label>
+
+            <button class="sim-btn" style="margin-top:15px; background-color: var(--primary);" onclick="gradeQuizM3()">Validar Respuestas Teóricas</button>
+            <div id="quizFeedback3" style="margin-top:15px; font-weight:bold;"></div>
+        </div>
+
+        <!-- SIMULADOR INTERACTIVO WORKSPACE SIMULATOR -->
+        <div class="simulator-wrapper">
+            <div class="sim-header">
+                <h2>n8n Workspace Simulator</h2>
+                <p style="color: var(--text-muted); font-size: 1rem; max-width: 800px; margin: 0 auto;">Arrastra los nodos desde el panel superior y suéltalos en el lienzo para construir el flujo de datos. Constrúyelo de izquierda a derecha.</p>
+                <p style="color: var(--accent-orange); font-size: 0.95rem; margin-top: 8px;"><strong>Misión Práctica:</strong> Recibir Lead ➔ Validar Email ➔ Crear Borrador con IA ➔ Enviar Email ➔ Notificar a Slack.</p>
+            </div>
+
+            <div class="sim-workspace">
+                <!-- PALETA DE NODOS DISPONIBLES -->
+                <div class="node-palette dropzone" id="palette">
+                    <div class="node" draggable="true" id="node-slack">
+                        <span></span>
+                        Slack Node
+                        <span style="color: #94a3b8;">POST /chat.postMessage</span>
+                    </div>
+                    
+                    <div class="node" draggable="true" id="node-if">
+                        <span></span>
+                        IF Node
+                        <span style="color: #94a3b8;">{{ $json.email }} != null</span>
+                    </div>
+                    
+                    <div class="node" draggable="true" id="node-gmail">
+                        <span></span>
+                        Gmail Node
+                        <span style="color: #94a3b8;">Send Email (OAuth2)</span>
+                    </div>
+                    
+                    <div class="node" draggable="true" id="node-webhook">
+                        <span></span>
+                        Webhook Node
+                        <span style="color: #94a3b8;">Listen POST /lead</span>
+                    </div>
+                    
+                    <div class="node" draggable="true" id="node-openai">
+                        <span></span>
+                        OpenAI Node
+                        <span style="color: #94a3b8;">Create Completion</span>
+                    </div>
+                </div>
+
+                <!-- LIENZO / CANVAS DE TRABAJO -->
+                <div class="canvas">
+                    <div class="dropzone target" data-step="1"></div>
+                    <div class="arrow">➔</div>
+                    <div class="dropzone target" data-step="2"></div>
+                    <div class="arrow">➔</div>
+                    <div class="dropzone target" data-step="3"></div>
+                    <div class="arrow">➔</div>
+                    <div class="dropzone target" data-step="4"></div>
+                    <div class="arrow">➔</div>
+                    <div class="dropzone target" data-step="5"></div>
+                </div>
+
+                <!-- CONTROLES E IMPRESIÓN EN CONSOLA -->
+                <div class="sim-controls">
+                    <button class="sim-btn" id="btn-execute">▶ Execute Workflow</button>
+                    <div class="console-output" id="console"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // --- LÓGICA DE DESPLEGABLE SIDEBAR ---
+    const rocketToggle = document.getElementById('rocketToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('active');
+    }
+
+    rocketToggle.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    // --- ACTUALIZACIÓN DE USUARIO Y PROGRESO ---
+    function updateProgressUI() {
+        const user = localStorage.getItem('n8n_user_email');
+        if (user) {
+            document.getElementById('userEmailDisplay').innerText = user;
+        }
+
+        const progress = JSON.parse(localStorage.getItem('n8n_progress')) || { m1: false, m2: false, m3: false };
+        let completedCount = 0;
+        
+        if (progress.m1) { completedCount++; document.getElementById('m1Badge').innerText = 'Completado'; document.getElementById('m1Badge').classList.add('completed'); }
+        if (progress.m2) { completedCount++; document.getElementById('m2Badge').innerText = 'Completado'; document.getElementById('m2Badge').classList.add('completed'); }
+        if (progress.m3) { completedCount++; document.getElementById('m3Badge').innerText = 'Completado'; document.getElementById('m3Badge').classList.add('completed'); }
+
+        const percentage = Math.round((completedCount / 3) * 100);
+        document.getElementById('overallProgressBar').style.width = percentage + '%';
+        document.getElementById('overallProgressText').innerText = percentage + '% Completado';
+    }
+
+    // --- CUESTIONARIO TÉCNICO ---
+    function gradeQuizM3() {
+        const q1 = document.querySelector('input[name="q1_m3"]:checked');
+        const q2 = document.querySelector('input[name="q2_m3"]:checked');
+        const q3 = document.querySelector('input[name="q3_m3"]:checked');
+        const feedback = document.getElementById('quizFeedback3');
+
+        if (!q1 || !q2 || !q3) {
+            feedback.innerText = "⚠️ Por favor responde todas las preguntas del cuestionario.";
+            feedback.style.color = "#f59e0b";
+            return;
+        }
+
+        if (q1.value === 'b' && q2.value === 'a' && q3.value === 'b') {
+            feedback.innerText = "🎉 ¡Excelente! Has respondido correctamente todas las preguntas teóricas.";
+            feedback.style.color = "#22c55e";
+        } else {
+            feedback.innerText = "❌ Hay respuestas incorrectas. Revisa los conceptos teóricos del módulo e inténtalo de nuevo.";
+            feedback.style.color = "#ef4444";
+        }
+    }
+
+    // --- SIMULADOR INTERACTIVO DRAG & DROP ---
+    document.addEventListener('DOMContentLoaded', () => {
+        updateProgressUI();
+
+        const draggables = document.querySelectorAll('.node');
+        const dropzones = document.querySelectorAll('.dropzone');
+        const executeBtn = document.getElementById('btn-execute');
+        const consoleOut = document.getElementById('console');
+
+        // Secuencia correcta de IDs basada en la misión
+        const correctSequence = ['node-webhook', 'node-if', 'node-openai', 'node-gmail', 'node-slack'];
+
+        // Lógica de arrastrar (Drag)
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggable.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', draggable.id);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+        });
+
+        // Lógica de soltar (Drop)
+        dropzones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('hovered');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('hovered');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('hovered');
+                
+                const draggableId = e.dataTransfer.getData('text/plain');
+                const draggedElement = document.getElementById(draggableId);
+
+                // Si la zona de destino ya tiene un nodo, devolver el nodo existente a la paleta
+                if (zone.classList.contains('target') && zone.children.length > 0) {
+                    const existingNode = zone.firstElementChild;
+                    document.getElementById('palette').appendChild(existingNode);
+                }
+                
+                zone.appendChild(draggedElement);
+                consoleOut.style.display = 'none';
+            });
+        });
+
+        // Lógica de Validación del Simulador
+        executeBtn.addEventListener('click', () => {
+            consoleOut.style.display = 'block';
+            consoleOut.innerHTML = '> Ejecutando Workflow...<br>';
+            
+            const targets = document.querySelectorAll('.canvas .target');
+            let currentSequence = [];
+            let isEmpty = false;
+
+            targets.forEach(target => {
+                if(target.children.length > 0) {
+                    currentSequence.push(target.firstElementChild.id);
+                } else {
+                    isEmpty = true;
+                }
+            });
+
+            setTimeout(() => {
+                if (isEmpty || currentSequence.length < 5) {
+                    consoleOut.innerHTML += '<span style="color: #ef4444;">> ERROR: Faltan nodos en el flujo. Conecta todos los puertos en el lienzo.</span>';
+                    return;
+                }
+
+                if (JSON.stringify(currentSequence) === JSON.stringify(correctSequence)) {
+                    consoleOut.innerHTML += '> Compilando nodos... OK<br>';
+                    consoleOut.innerHTML += '> Enviando Webhook Payload... OK<br>';
+                    consoleOut.innerHTML += '> Autenticando con OpenAI & Gmail OAuth2... OK<br>';
+                    consoleOut.innerHTML += '<span style="color: #22c55e;">> SUCCESS: Workflow ejecutado correctamente. (Exit Code: 0) - ¡Módulo III Completado! 🎉</span>';
+
+                    // Actualizar localStorage para marcar Módulo III completado (100% de avance)
+                    let progress = JSON.parse(localStorage.getItem('n8n_progress')) || {};
+                    progress.m3 = true;
+                    localStorage.setItem('n8n_progress', JSON.stringify(progress));
+                    updateProgressUI();
+                } else {
+                    consoleOut.innerHTML += '<span style="color: #ef4444;">> ERROR: Pipeline fallido (Status 500). El orden de los nodos no es lógico. Revisa la Misión Práctica.</span>';
+                }
+            }, 800);
+        });
+    });
+</script>
+</body>
+</html>
