@@ -1,0 +1,17 @@
+# Build outputs
+dist/
+.astro/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables
+.env
+.env.production
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log

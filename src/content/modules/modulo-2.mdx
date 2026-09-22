@@ -1,0 +1,189 @@
+---
+id: "modulo-2"
+moduleNumber: 2
+title: "Módulo II: Flujos Avanzados, Manipulación de JSON y Conexión con APIs"
+shortTitle: "Módulo II: Automatización"
+description: "Estructuras de datos en JSON, peticiones HTTP (GET y POST), desempaque con Split Out, bifurcación múltiple con Switch, unificación con Merge y bucles iterativos."
+duration: "60 min"
+badgeText: "Pendiente"
+interactiveType: "sequence-game"
+hasLessons: false
+---
+
+import VideoPlaceholder from '@/components/common/VideoPlaceholder.astro';
+import SequenceGame from '@/components/interactive/SequenceGame.astro';
+
+<VideoPlaceholder
+  title="Video 1: Registro en n8n Cloud y Anatomía del Primer Flujo"
+  subtitle="Interfaz del lienzo, configuración de credenciales y navegación"
+/>
+
+## Fundamentos del Intercambio de Datos en la Web
+
+### ¿Qué es JSON?
+
+**JSON** (*JavaScript Object Notation*) es el formato estándar universal que utilizan las aplicaciones para comunicarse entre sí a través de internet. Es liviano, fácil de interpretar tanto por humanos como por computadoras, y organiza los datos en pares de **clave** y **valor**.
+
+```json
+{
+  "id": 1042,
+  "cliente": "Laura Sánchez",
+  "monto": 1750.50,
+  "es_vip": true,
+  "productos": ["Licencia n8n", "Consultoría IA"]
+}
+```
+
+En n8n, absolutamente toda la información que fluye entre un nodo y otro viaja empacada en estructuras JSON. Cada nodo entrega un arreglo de objetos JSON en su salida para que el siguiente nodo los consuma.
+
+---
+
+### ¿Qué es una API?
+
+Una **API** (*Application Programming Interface*) es el puente de comunicación entre dos sistemas independientes. 
+
+> **La analogía del restaurante:**
+> Tú eres el cliente sentado en la mesa (tu flujo de n8n) y la cocina es el servidor donde están los datos (Google, Telegram, Shopify). Tú no puedes entrar directamente a la cocina a preparar los platos; necesitas al **mesero**, quien toma tu orden, va a la cocina, trae los alimentos y te los sirve organizados en la mesa. La API es exactamente ese mesero.
+
+#### Métodos Principales: GET vs POST
+
+1. **Método GET (Pedir información al mesero):**
+   Envías una solicitud para consultar datos sin modificar nada en el servidor remoto.
+   ```http
+   GET https://dummyjson.com/carts
+   ```
+   *Respuesta devuelta por la API:* Un objeto JSON con la lista de carritos y facturas.
+
+2. **Método POST (Entregar datos al mesero para que haga algo):**
+   Envías un paquete de información (*payload*) para crear o modificar un recurso en el servidor de destino.
+   ```http
+   POST https://api.telegram.org/bot<TOKEN>/sendMessage
+   Content-Type: application/json
+
+   {
+     "chat_id": "987654321",
+     "text": "¡Alerta! Se ha registrado una compra VIP superior a $1,500 USD."
+   }
+   ```
+
+---
+
+<VideoPlaceholder
+  title="Video 2: Nodos Avanzados de Control de Datos"
+  subtitle="Switch, Split Out, Merge y Loop Over Items en profundidad"
+/>
+
+## Nodos Avanzados de Transformación en n8n
+
+### 1. Nodo Switch (El Clasificador de Correspondencia)
+Cuando las decisiones tienen más de dos salidas posibles (más allá del simple Sí/No del IF), el nodo **Switch** permite definir múltiples compuertas de enrutamiento basadas en reglas de comparación (números, cadenas, expresiones regulares).
+
+### 2. Nodo Split Out (Desempacar la Maleta)
+A menudo, una API entrega una lista entera de elementos agrupada dentro de un único campo (*Array*). Si queremos que n8n procese cada elemento como un registro independiente, el nodo **Split Out** (*Item Lists*) "abre la maleta" y convierte ese bloque en filas individuales.
+
+### 3. Nodo Merge (El Punto de Encuentro)
+Cuando un flujo se bifurca en varios caminos o cuando necesitamos combinar datos provenientes de dos fuentes distintas (por ejemplo, clientes de un CRM y facturas de un ERP), el nodo **Merge** actúa como la glorieta que vuelve a unificar los datos en una sola autopista de información.
+
+### 4. Nodo HTTP Request (El Teléfono Universal)
+Cuando una plataforma no cuenta con un nodo nativo preconstruido en n8n, el **HTTP Request** permite conectarse a cualquier servicio del planeta que cuente con una API REST o GraphQL.
+
+### 5. Nodo Loop Over Items (La Cadena de Producción)
+Permite procesar colecciones de datos elemento por elemento en lotes controlados, evitando saturar APIs externas y gestionando límites de tasa (*rate limits*).
+
+---
+
+<VideoPlaceholder
+  title="Video 3: Construcción Paso a Paso del Flujo Avanzado"
+  subtitle="Integración real: Schedule ➔ HTTP Request ➔ Split Out ➔ Switch ➔ Merge ➔ Loop"
+/>
+
+## Configuración Guiada del Flujo Avanzado
+
+```text
+[Schedule Trigger] ➔ [HTTP Request] ➔ [Split Out (carts)] ➔ [Switch]
+                                                               ├──> [Ruta < 1500]  ──┐
+                                                               └──> [Ruta >= 1500] ──┴─> [Merge] ➔ [Loop Over Items]
+```
+
+### Paso 1: El Temporizador (Schedule Trigger)
+- **Intervalo:** Diario (*Daily*).
+- **Hora de Ejecución:** `7:00 AM`.
+
+### Paso 2: La Extracción (HTTP Request)
+- **Método:** `GET`.
+- **URL:** `https://dummyjson.com/carts`.
+
+### Paso 3: Desempacar Facturas (Split Out)
+- **Campo a desempacar:** `carts`.
+- *Resultado:* Convierte 1 paquete masivo en 30 ítems individuales procesables.
+
+### Paso 4: Clasificación por Monto (Switch)
+- **Tipo de Dato:** `Number`.
+- **Valor a evaluar:** `{{ $json.total }}`.
+- **Ruta 1:** Menor que `1500` (Compras regulares).
+- **Ruta 2:** Mayor o igual que `1500` (Compras VIP de alto valor).
+
+### Paso 5: Unificación (Merge)
+- **Modo:** `Append` (Acumular y preservar todos los registros).
+- Conectar ambas salidas del Switch a las entradas del Merge.
+
+### Paso 6: Procesamiento en Bucle (Loop Over Items)
+- Conectar la salida VIP para despachar avisos individuales y cerrar el ciclo conectando la acción de regreso al puerto de bucle.
+
+---
+
+export const level1Blocks = [
+  { id: 'A', text: '[Disparador] Schedule Trigger programado diariamente a las 7:00 AM.' },
+  { id: 'B', text: '[Petición HTTP] HTTP Request (GET) a la API para consultar las ventas.' },
+  { id: 'C', text: '[Transformación] Split Out sobre el campo "carts" para separar las 30 órdenes.' },
+  { id: 'D', text: '[Clasificación] Switch evaluando si el total de la compra es >= $1500 USD.' },
+  { id: 'E', text: '[Consolidación] Merge en modo Append para unificar el reporte general.' },
+];
+
+export const level2Blocks = [
+  { id: 'A', text: 'Recibir lote con las órdenes clasificadas como compras VIP.' },
+  { id: 'B', text: 'Iniciar nodo Loop Over Items con tamaño de lote de 1 en 1.' },
+  { id: 'C', text: 'Ejecutar acción de envío de mensaje con el detalle de la compra.' },
+  { id: 'D', text: 'Conectar la salida de la acción al puerto "Loop" del nodo repetidor.' },
+  { id: 'E', text: 'Salida "done": Ejecutar reporte final al vaciarse la lista de compras.' },
+];
+
+export const level3Blocks = [
+  { id: 'A', text: '[Webhook] Recepción instantánea del payload JSON con la orden de compra.' },
+  { id: 'B', text: '[IF Node] Verificar si el estado del pago es "approved".' },
+  { id: 'C', text: '[Ruta True] HTTP Request (POST) registrando la venta en la pasarela externa.' },
+  { id: 'D', text: '[Ruta False] Enviar alerta de transacción rechazada al cliente.' },
+  { id: 'E', text: '[Respuesta Final] Responder HTTP 200 al Webhook emisor confirmando el flujo.' },
+];
+
+export const m2Levels = [
+  {
+    id: 1,
+    name: 'Reto 1: Flujo de Extracción y Clasificación n8n',
+    scenario: 'Ordena la secuencia real de nodos para extraer datos vía API, separar carritos y enrutar por presupuesto.',
+    blocks: level1Blocks,
+    correctOrder: ['A', 'B', 'C', 'D', 'E'],
+  },
+  {
+    id: 2,
+    name: 'Reto 2: Estructura del Bucle Iterativo (Loop)',
+    scenario: 'Arma el circuito cerrado para iterar de forma controlada sobre un arreglo de órdenes VIP.',
+    blocks: level2Blocks,
+    correctOrder: ['A', 'B', 'C', 'D', 'E'],
+  },
+  {
+    id: 3,
+    name: 'Reto 3: Arquitectura Webhook con Validación',
+    scenario: 'Construye la secuencia de recepción, confirmación y despacho ante un evento en tiempo real.',
+    blocks: level3Blocks,
+    correctOrder: ['A', 'B', 'C', 'D', 'E'],
+  },
+];
+
+<SequenceGame
+  moduleId="modulo-2"
+  title="Evaluación Práctica: Arquitectura y Datos en n8n"
+  subtitle="Pon a prueba la construcción secuencial de flujos con APIs, Switch, Merge y Loops"
+  introText="Ordena los pasos técnicos según la arquitectura aprendida: Disparador ➔ Consulta HTTP ➔ Desempaque ➔ Bifurcación ➔ Unificación/Cierre."
+  levels={m2Levels}
+/>

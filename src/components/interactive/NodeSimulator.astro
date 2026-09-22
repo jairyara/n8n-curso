@@ -1,0 +1,297 @@
+---
+interface Props {
+  moduleId?: string;
+}
+
+const { moduleId = 'modulo-3' } = Astro.props;
+---
+
+<div class="my-12 rounded-2xl bg-brand-surface border border-slate-800 p-6 sm:p-8 shadow-2xl" id="nodeSimulator">
+  <!-- Header del Simulador -->
+  <div class="text-center max-w-2xl mx-auto mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-n8n/10 text-n8n text-xs font-bold uppercase tracking-wider mb-2">
+      ⚡ Entorno Práctico
+    </div>
+    <h3 class="text-2xl sm:text-3xl font-black text-slate-100 mb-2">
+      n8n Workspace Simulator
+    </h3>
+    <p class="text-xs sm:text-sm text-slate-400 mb-4">
+      Arrastra los nodos desde la paleta superior y suéltalos en las posiciones del lienzo para construir el flujo de datos de izquierda a derecha.
+    </p>
+    <div class="inline-block bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs font-medium text-amber-400">
+      🎯 <strong>Misión Práctica:</strong> Recibir Lead ➔ Validar Email ➔ Crear Borrador con IA ➔ Enviar Email ➔ Notificar a Slack
+    </div>
+  </div>
+
+  <!-- Paleta de Nodos -->
+  <div class="mb-6">
+    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+      Nodos Disponibles en la Paleta:
+    </p>
+    <div
+      id="simPalette"
+      class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-wrap gap-2.5 min-h-[70px] items-center"
+    >
+      <div
+        class="sim-node cursor-grab active:cursor-grabbing px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold select-none flex flex-col shadow transition-all hover:scale-105"
+        draggable="true"
+        id="node-slack"
+      >
+        <span class="flex items-center gap-1.5 text-purple-400">
+          <span class="w-2 h-2 rounded-full bg-purple-400"></span> Slack Node
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">POST /chat.postMessage</span>
+      </div>
+
+      <div
+        class="sim-node cursor-grab active:cursor-grabbing px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold select-none flex flex-col shadow transition-all hover:scale-105"
+        draggable="true"
+        id="node-if"
+      >
+        <span class="flex items-center gap-1.5 text-amber-400">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span> IF Node
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">{'{{ $json.email }} != null'}</span>
+      </div>
+
+      <div
+        class="sim-node cursor-grab active:cursor-grabbing px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold select-none flex flex-col shadow transition-all hover:scale-105"
+        draggable="true"
+        id="node-gmail"
+      >
+        <span class="flex items-center gap-1.5 text-rose-400">
+          <span class="w-2 h-2 rounded-full bg-rose-400"></span> Gmail Node
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">Send Email (OAuth2)</span>
+      </div>
+
+      <div
+        class="sim-node cursor-grab active:cursor-grabbing px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold select-none flex flex-col shadow transition-all hover:scale-105"
+        draggable="true"
+        id="node-webhook"
+      >
+        <span class="flex items-center gap-1.5 text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Webhook Node
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">Listen POST /lead</span>
+      </div>
+
+      <div
+        class="sim-node cursor-grab active:cursor-grabbing px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold select-none flex flex-col shadow transition-all hover:scale-105"
+        draggable="true"
+        id="node-openai"
+      >
+        <span class="flex items-center gap-1.5 text-sky-400">
+          <span class="w-2 h-2 rounded-full bg-sky-400"></span> OpenAI Node
+        </span>
+        <span class="text-[10px] text-slate-400 font-mono">Create Completion</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lienzo / Canvas de Trabajo -->
+  <div class="mb-6">
+    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+      Lienzo de Ejecución (Secuencia de 5 Pasos):
+    </p>
+    <div class="p-4 sm:p-6 rounded-2xl bg-slate-950 border border-slate-800 overflow-x-auto">
+      <div class="flex items-center gap-2 min-w-[700px] justify-between">
+        {
+          [1, 2, 3, 4, 5].map((step, idx) => (
+            <>
+              <div
+                class="sim-target w-36 h-24 rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/40 flex flex-col items-center justify-center p-2 text-center transition-all"
+                data-step={step}
+              >
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Paso {step}
+                </span>
+                <span class="text-[11px] text-slate-600 italic target-hint">Soltar aquí</span>
+              </div>
+
+              {idx < 4 && (
+                <div class="text-slate-600 font-black text-lg select-none px-1">
+                  ➔
+                </div>
+              )}
+            </>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles y Terminal de Salida -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        id="btnExecuteSim"
+        class="px-6 py-3 rounded-xl bg-n8n hover:bg-n8n-hover text-white font-bold text-sm shadow-lg shadow-n8n/25 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <span>▶</span> Execute Workflow
+      </button>
+
+      <button
+        type="button"
+        id="btnResetSim"
+        class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+      >
+        ↺ Reiniciar Lienzo
+      </button>
+    </div>
+
+    <p class="text-xs text-slate-500">
+      Tip: También puedes hacer clic sobre un nodo para enviarlo a la siguiente casilla libre.
+    </p>
+  </div>
+
+  <!-- Consola de salida -->
+  <div
+    id="simConsole"
+    class="mt-6 rounded-xl bg-slate-950 border border-slate-800 p-4 font-mono text-xs text-slate-300 leading-relaxed hidden"
+  ></div>
+</div>
+
+<script>
+  import { setModuleCompleted } from '@/scripts/progress';
+
+  const simulator = document.getElementById('nodeSimulator');
+  if (simulator) {
+    const palette = document.getElementById('simPalette') as HTMLElement;
+    const nodes = simulator.querySelectorAll('.sim-node');
+    const targets = simulator.querySelectorAll('.sim-target');
+    const executeBtn = document.getElementById('btnExecuteSim');
+    const resetBtn = document.getElementById('btnResetSim');
+    const consoleOut = document.getElementById('simConsole') as HTMLElement;
+
+    const correctSequence = ['node-webhook', 'node-if', 'node-openai', 'node-gmail', 'node-slack'];
+
+    // Drag & Drop
+    nodes.forEach((node) => {
+      node.addEventListener('dragstart', (e) => {
+        const dragEvent = e as DragEvent;
+        node.classList.add('opacity-50');
+        dragEvent.dataTransfer?.setData('text/plain', node.id);
+      });
+
+      node.addEventListener('dragend', () => {
+        node.classList.remove('opacity-50');
+      });
+
+      // Soporte para hacer clic y colocar en la siguiente casilla libre
+      node.addEventListener('click', () => {
+        // Si está en la paleta, mover a la primera casilla libre
+        if (node.parentElement === palette) {
+          for (const target of targets) {
+            if (!target.querySelector('.sim-node')) {
+              const hint = target.querySelector('.target-hint');
+              if (hint) (hint as HTMLElement).style.display = 'none';
+              target.appendChild(node);
+              return;
+            }
+          }
+        } else {
+          // Si está en un target, devolver a la paleta
+          const parentTarget = node.parentElement;
+          palette.appendChild(node);
+          const hint = parentTarget?.querySelector('.target-hint');
+          if (hint) (hint as HTMLElement).style.display = 'block';
+        }
+      });
+    });
+
+    targets.forEach((target) => {
+      target.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        target.classList.add('border-n8n', 'bg-n8n/5');
+      });
+
+      target.addEventListener('dragleave', () => {
+        target.classList.remove('border-n8n', 'bg-n8n/5');
+      });
+
+      target.addEventListener('drop', (e) => {
+        e.preventDefault();
+        target.classList.remove('border-n8n', 'bg-n8n/5');
+
+        const dragEvent = e as DragEvent;
+        const nodeId = dragEvent.dataTransfer?.getData('text/plain');
+        if (!nodeId) return;
+
+        const draggedNode = document.getElementById(nodeId);
+        if (!draggedNode) return;
+
+        // Si ya hay un nodo en este target, devolverlo a la paleta
+        const existingNode = target.querySelector('.sim-node');
+        if (existingNode && existingNode !== draggedNode) {
+          palette.appendChild(existingNode);
+        }
+
+        const hint = target.querySelector('.target-hint');
+        if (hint) (hint as HTMLElement).style.display = 'none';
+
+        target.appendChild(draggedNode);
+      });
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      nodes.forEach((node) => {
+        palette.appendChild(node);
+      });
+      targets.forEach((target) => {
+        const hint = target.querySelector('.target-hint');
+        if (hint) (hint as HTMLElement).style.display = 'block';
+      });
+      consoleOut.classList.add('hidden');
+      consoleOut.innerHTML = '';
+    });
+
+    executeBtn?.addEventListener('click', () => {
+      consoleOut.classList.remove('hidden');
+      consoleOut.innerHTML = '<span class="text-sky-400">> [SIMULATOR] Compilando pipeline de nodos...</span><br/>';
+
+      const currentOrder: string[] = [];
+      let incomplete = false;
+
+      targets.forEach((t) => {
+        const childNode = t.querySelector('.sim-node');
+        if (childNode) {
+          currentOrder.push(childNode.id);
+        } else {
+          incomplete = true;
+        }
+      });
+
+      setTimeout(() => {
+        if (incomplete || currentOrder.length < 5) {
+          consoleOut.innerHTML +=
+            '<span class="text-rose-400">> ERROR: Faltan nodos en el lienzo. Conecta los 5 pasos de la misión.</span>';
+          return;
+        }
+
+        const isMatch = JSON.stringify(currentOrder) === JSON.stringify(correctSequence);
+
+        if (isMatch) {
+          consoleOut.innerHTML +=
+            '<span class="text-slate-400">> [OK] Escuchando Webhook POST /lead...</span><br/>';
+          consoleOut.innerHTML +=
+            '<span class="text-slate-400">> [OK] Evaluando condición IF (email != null)...</span><br/>';
+          consoleOut.innerHTML +=
+            '<span class="text-slate-400">> [OK] OpenAI Completion invocada con éxito...</span><br/>';
+          consoleOut.innerHTML +=
+            '<span class="text-slate-400">> [OK] Enviando correo electrónico con Gmail API...</span><br/>';
+          consoleOut.innerHTML +=
+            '<span class="text-slate-400">> [OK] Notificación enviada al canal de Slack #leads-vip...</span><br/>';
+          consoleOut.innerHTML +=
+            '<span class="text-emerald-400 font-bold">> SUCCESS: ¡Workflow ejecutado con código 0! Felicitaciones, Módulo III Completado 🎉</span>';
+
+          setModuleCompleted('modulo-3', true);
+        } else {
+          consoleOut.innerHTML +=
+            '<span class="text-rose-400">> ERROR 500: Secuencia incorrecta. Recuerda la misión: Recibir Lead ➔ Validar Email ➔ Crear Borrador con IA ➔ Enviar Email ➔ Notificar a Slack.</span>';
+        }
+      }, 500);
+    });
+  }
+</script>

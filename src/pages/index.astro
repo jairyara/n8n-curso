@@ -1,0 +1,88 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import VideoPlaceholder from '@/components/common/VideoPlaceholder.astro';
+import { getCollection } from 'astro:content';
+
+// Obtener módulos ordenados de las Content Collections
+const modules = await getCollection('modules');
+modules.sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
+---
+
+<BaseLayout
+  title="OVA n8n - Plataforma de Aprendizaje Interactiva | ETITC 2026"
+  description="Objetos Virtuales de Aprendizaje - Semillero de Investigación en Automatización de Procesos con n8n"
+>
+  <div class="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 flex-grow">
+    <!-- Header Principal del Curso -->
+    <header class="border-b-2 border-n8n pb-6 mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-n8n/10 text-n8n text-xs font-bold uppercase tracking-wider mb-3">
+        Objetos Virtuales de Aprendizaje (OVAS)
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-100 tracking-tight mb-3">
+        Automatización de Procesos con n8n
+      </h1>
+      <p class="text-base sm:text-lg text-slate-400 max-w-3xl">
+        Virtual Aprende — Semillero de Investigación en Automatización con n8n | ETITC 2026.
+        Aprende desde los conceptos fundamentales de LMS y OVA hasta integraciones de inteligencia artificial y resiliencia de sistemas.
+      </p>
+    </header>
+
+    <!-- Espacio para Video Introductorio General -->
+    <VideoPlaceholder
+      title="Video Introductorio General: Bienvenida al Curso y Ruta Formativa"
+      subtitle="Recorrido por la plataforma, metodología y objetivos de aprendizaje"
+    />
+
+    <!-- Sección: Ruta de Formación -->
+    <section class="mt-12">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-black text-slate-100 tracking-tight">
+            Ruta de Formación
+          </h2>
+          <p class="text-sm text-slate-400">
+            Completa los módulos secuencialmente para desbloquear tu dominio en automatización.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {
+          modules.map((module) => (
+            <div class="rounded-2xl bg-brand-surface border border-slate-800 p-6 flex flex-col justify-between hover:border-slate-700 hover:shadow-xl hover:shadow-n8n/5 transition-all group">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-800 text-sm font-black text-n8n border border-slate-700/60 group-hover:scale-105 transition-transform">
+                    0{module.data.moduleNumber}
+                  </span>
+                  {module.data.duration && (
+                    <span class="text-[11px] font-medium text-slate-400 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
+                      ⏱ {module.data.duration}
+                    </span>
+                  )}
+                </div>
+
+                <h3 class="text-lg font-bold text-slate-100 group-hover:text-n8n transition-colors mb-2">
+                  {module.data.shortTitle}
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-400 line-clamp-3 leading-relaxed mb-6">
+                  {module.data.description}
+                </p>
+              </div>
+
+              <div>
+                <a
+                  href={`/modulos/${module.data.id}`}
+                  class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-n8n hover:bg-n8n-hover text-white text-xs sm:text-sm font-bold shadow-lg shadow-n8n/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <span>Iniciar Módulo</span>
+                  <span>→</span>
+                </a>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>

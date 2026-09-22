@@ -1,0 +1,126 @@
+---
+interface Props {
+  moduleId?: string;
+}
+
+const { moduleId = 'modulo-3' } = Astro.props;
+---
+
+<div class="my-10 rounded-2xl bg-brand-surface border border-slate-800 p-6 sm:p-8 shadow-xl" id="quizTechnicalWrapper">
+  <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800">
+    <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold text-lg">
+      📝
+    </div>
+    <div>
+      <h3 class="text-xl font-black text-slate-100 m-0">
+        Cuestionario de Arquitectura, IA y Resiliencia
+      </h3>
+      <p class="text-xs text-slate-400 m-0">
+        Evalúa tu comprensión teórica antes de pasar a la práctica.
+      </p>
+    </div>
+  </div>
+
+  <form id="quizForm" class="space-y-6">
+    <!-- Pregunta 1 -->
+    <fieldset class="space-y-3 bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-800/80">
+      <legend class="text-sm sm:text-base font-bold text-slate-200 mb-2">
+        1. ¿Cuál es la función principal de una API Key al integrar OpenAI o WhatsApp en n8n?
+      </legend>
+      <div class="space-y-2 text-xs sm:text-sm">
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q1" value="a" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">Modificar los colores y la apariencia gráfica de los nodos en el lienzo.</span>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q1" value="b" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">Servir como un token o carnet de autenticación seguro que autoriza a n8n a usar el servicio en nombre de la cuenta.</span>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q1" value="c" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">Aumentar la velocidad de conexión a internet de la máquina local.</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Pregunta 2 -->
+    <fieldset class="space-y-3 bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-800/80">
+      <legend class="text-sm sm:text-base font-bold text-slate-200 mb-2">
+        2. Si una API externa falla por una caída momentánea del servidor, ¿qué mecanismo evita que el flujo falle inmediatamente?
+      </legend>
+      <div class="space-y-2 text-xs sm:text-sm">
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q2" value="a" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">La función de Reintentos (Retry on Fail) configurada en el nodo.</span>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q2" value="b" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">Eliminar el nodo y volver a conectarlo manualmente.</span>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q2" value="c" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">El nodo Split Out sin parámetros adicionales.</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Pregunta 3 -->
+    <fieldset class="space-y-3 bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-800/80">
+      <legend class="text-sm sm:text-base font-bold text-slate-200 mb-2">
+        3. ¿Qué diferencia existe entre un Workflow de Error y el Logging en n8n?
+      </legend>
+      <div class="space-y-2 text-xs sm:text-sm">
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q3" value="a" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">No hay diferencia, ambos son términos sinónimos para el historial.</span>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 cursor-pointer transition-colors">
+          <input type="radio" name="q3" value="b" class="mt-0.5 text-n8n focus:ring-n8n" />
+          <span class="text-slate-300">El Workflow de Error ejecuta acciones de contingencia automáticas ante un fallo, mientras que el Logging registra la bitácora histórica de lo sucedido.</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
+      <button
+        type="submit"
+        class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
+      >
+        Validar Respuestas Teóricas
+      </button>
+
+      <div id="quizFeedback" class="text-xs sm:text-sm font-semibold"></div>
+    </div>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById('quizForm') as HTMLFormElement | null;
+  const feedback = document.getElementById('quizFeedback');
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!feedback) return;
+
+    const data = new FormData(form);
+    const q1 = data.get('q1');
+    const q2 = data.get('q2');
+    const q3 = data.get('q3');
+
+    if (!q1 || !q2 || !q3) {
+      feedback.textContent = '⚠️ Por favor responde todas las preguntas antes de validar.';
+      feedback.className = 'text-xs sm:text-sm font-semibold text-amber-400';
+      return;
+    }
+
+    const isCorrect = q1 === 'b' && q2 === 'a' && q3 === 'b';
+
+    if (isCorrect) {
+      feedback.textContent = '🎉 ¡Excelente! Todas las respuestas teóricas son correctas.';
+      feedback.className = 'text-xs sm:text-sm font-semibold text-emerald-400';
+    } else {
+      feedback.textContent = '❌ Hay respuestas incorrectas. Revisa la teoría del módulo e inténtalo de nuevo.';
+      feedback.className = 'text-xs sm:text-sm font-semibold text-rose-400';
+    }
+  });
+</script>

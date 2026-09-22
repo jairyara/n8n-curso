@@ -1,0 +1,51 @@
+---
+import { getCollection, render } from 'astro:content';
+import ModuleLayout from '@/layouts/ModuleLayout.astro';
+
+export async function getStaticPaths() {
+  const modules = await getCollection('modules');
+  modules.sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
+
+  return modules.map((module, index) => {
+    const prevModule =
+      index > 0
+        ? {
+            id: modules[index - 1].data.id,
+            title: modules[index - 1].data.shortTitle,
+          }
+        : null;
+
+    const nextModule =
+      index < modules.length - 1
+        ? {
+            id: modules[index + 1].data.id,
+            title: modules[index + 1].data.shortTitle,
+          }
+        : null;
+
+    return {
+      params: { slug: module.data.id },
+      props: {
+        module,
+        prevModule,
+        nextModule,
+      },
+    };
+  });
+}
+
+const { module, prevModule, nextModule } = Astro.props;
+const { Content } = await render(module);
+---
+
+<ModuleLayout
+  id={module.data.id}
+  moduleNumber={module.data.moduleNumber}
+  title={module.data.title}
+  description={module.data.description}
+  duration={module.data.duration}
+  prevModule={prevModule}
+  nextModule={nextModule}
+>
+  <Content />
+</ModuleLayout>

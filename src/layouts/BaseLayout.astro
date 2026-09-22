@@ -1,0 +1,55 @@
+---
+import Sidebar from '@/components/common/Sidebar.astro';
+import EmailModal from '@/components/common/EmailModal.astro';
+import '@/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'OVA n8n - Plataforma de Aprendizaje Interactiva',
+  description = 'Curso de Automatización con n8n, Objetos Virtuales de Aprendizaje y Semillero de Investigación ETITC',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-brand-dark text-slate-100 min-h-screen flex flex-col font-sans">
+    <!-- Botón Flotante para Móvil (Rocket Launcher) -->
+    <button
+      id="mobileNavToggle"
+      type="button"
+      class="lg:hidden fixed top-4 left-4 z-30 w-12 h-12 rounded-2xl bg-n8n hover:bg-n8n-hover text-white flex items-center justify-center text-xl shadow-xl shadow-n8n/30 active:scale-95 transition-all"
+      aria-label="Abrir menú de navegación"
+    >
+      🚀
+    </button>
+
+    <!-- Sidebar Navegación -->
+    <Sidebar />
+
+    <!-- Modal de Identificación -->
+    <EmailModal />
+
+    <!-- Contenedor Principal de Contenido -->
+    <div class="lg:pl-72 flex flex-col flex-grow min-h-screen">
+      <slot />
+    </div>
+
+    <script>
+      const mobileToggle = document.getElementById('mobileNavToggle');
+      mobileToggle?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('n8n:toggle-sidebar'));
+      });
+    </script>
+  </body>
+</html>

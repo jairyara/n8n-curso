@@ -1,0 +1,176 @@
+---
+id: "modulo-1"
+moduleNumber: 1
+title: "Módulo I: Fundamentos de OVA, LMS y Automatización con n8n"
+shortTitle: "Módulo I: Fundamentos"
+description: "Conceptos clave de LMS, OVA, comparativas de plataformas y la lógica central de Triggers, Webhooks, IF, Action Nodes y Code Node."
+duration: "45 min"
+badgeText: "Pendiente"
+interactiveType: "sequence-game"
+hasLessons: false
+---
+
+import VideoPlaceholder from '@/components/common/VideoPlaceholder.astro';
+import SequenceGame from '@/components/interactive/SequenceGame.astro';
+
+<VideoPlaceholder
+  title="Video 1: Introducción a LMS y Objetos Virtuales de Aprendizaje (OVA)"
+  subtitle="Fundamentos conceptuales y arquitectura de formación"
+/>
+
+## ¿Qué es un LMS?
+
+Un **LMS** (*Learning Management System* o Sistema de Gestión del Aprendizaje) es una plataforma digital diseñada para administrar, distribuir y gestionar contenidos educativos. En ella se alojan cursos, materiales de estudio, actividades, evaluaciones y recursos virtuales destinados al proceso de aprendizaje de los usuarios.
+
+## ¿Qué es un OVA?
+
+Un **OVA** (*Objeto Virtual de Aprendizaje*) es un recurso digital diseñado con fines educativos específicos para facilitar el aprendizaje de un tema concreto. Los OVA pueden incluir contenidos interactivos, videos explicativos, simulaciones de flujo, evaluaciones dinámicas, animaciones e infografías que potencian la comprensión y retención del estudiante.
+
+> **Relación entre LMS y OVA:**
+> Los OVA son los recursos educativos interactivos que se alojan y distribuyen a través de un LMS, permitiendo a los estudiantes interactuar de manera guiada y autónoma con el conocimiento dentro de una plataforma estructurada.
+
+---
+
+<VideoPlaceholder
+  title="Video 2: ¿Por qué elegir n8n frente a Zapier o Make?"
+  subtitle="Comparativa técnica, soberanía de datos y costos de escala"
+/>
+
+## ¿Por qué elegir n8n?
+
+La elección de **n8n** en entornos profesionales y de investigación se fundamenta en cuatro pilares críticos:
+
+1. **Soberanía y control total de los datos:** A diferencia de soluciones cerradas en la nube pública, n8n garantiza que los flujos de trabajo cumplan estrictamente con normativas de privacidad y seguridad institucional, ya que los datos nunca tienen que transitar por servidores de terceros si no se desea.
+2. **Capacidad Self-Hosted (Autoalojamiento):** Permite el despliegue en infraestructura propia mediante contenedores Docker o servidores locales, reduciendo drásticamente dependencias externas.
+3. **Eficiencia económica en escala:** Mientras que herramientas como Zapier o Make cobran exponencialmente por cada tarea ejecutada, n8n ofrece un esquema de licenciamiento y uso comunitario altamente rentable para miles o millones de ejecuciones mensuales.
+4. **Extensibilidad sin límites (Open Source):** Su código fuente abierto permite crear nodos personalizados, conectar bases de datos propietarias y usar código JavaScript/TypeScript puro cuando la lógica nativa lo demande.
+
+---
+
+<VideoPlaceholder
+  title="Video 3: Triggers, Webhooks y Estructuras de Control en n8n"
+  subtitle="El núcleo lógico de cualquier automatización moderna"
+/>
+
+## Tema 1: El interruptor y el cartero (Triggers y Webhooks)
+
+### ¿Qué es un Trigger?
+
+Un **Trigger** (o Disparador) es el punto de inicio absoluto de una automatización. Es el evento que le indica al flujo: *"Es momento de comenzar"*.
+
+Imagina el interruptor de la luz de tu habitación: mientras nadie lo active, nada sucede; en el instante en que alguien lo pulsa, el circuito se cierra y la bombilla se enciende.
+
+- **En la vida cotidiana:** La alarma del móvil sonando a las 6:00 AM o el semáforo cambiando a verde.
+- **En n8n:** Un cronómetro (*Schedule Trigger* a una hora fija), un archivo nuevo subido a Google Drive o un mensaje entrante en Telegram.
+
+### ¿Qué es un Webhook?
+
+Un **Webhook** también inicia un flujo, pero no funciona preguntando periódicamente si hay novedades (*polling*), sino que **escucha pasivamente** hasta que un sistema externo le entrega un paquete de datos inmediato.
+
+- **La analogía del cartero:** En lugar de salir cada 2 minutos a la calle a ver si el paquete llegó, te sientas en la sala. Cuando el cartero toca el timbre y te entrega la carta en la mano, ese aviso instantáneo es exactamente un Webhook.
+- **En n8n:** Un formulario web enviado por un cliente, una pasarela de pagos notificando una compra aprobada o una alerta enviada por un sensor IoT.
+
+---
+
+## Nodo IF (La bifurcación en el camino)
+
+Las computadoras no razonan con ambigüedades; evalúan condiciones booleanas: **Verdadero (True)** o **Falso (False)**. El nodo **IF** es la bifurcación obligatoria cuando tu proceso depende de una regla de negocio.
+
+- **La experiencia cotidiana:** ¿Está lloviendo antes de salir?
+  - **Rama True:** Tomas el paraguas y sales con impermeable.
+  - **Rama False:** Tomas las gafas de sol y sales ligero de equipaje.
+- **En n8n:** ¿La factura supera los $1,500 USD? ¿El correo contiene la palabra *"Urgente"*? ¿El usuario ya existe en la base de datos? Dependiendo del resultado, el flujo toma caminos operativos independientes.
+
+---
+
+## Action Nodes (Las manos que ejecutan)
+
+Los **Action Nodes** son los brazos ejecutores de la automatización. Mientras el Trigger inicia el viaje y el IF toma decisiones lógicas, los Action Nodes realizan las tareas operativas concretas:
+
+- Enviar un correo electrónico con un archivo adjunto.
+- Insertar una fila en Google Sheets o PostgreSQL.
+- Emitir una notificación push o mensaje en Slack/WhatsApp.
+- Generar un archivo PDF o actualizar el CRM institucional.
+
+---
+
+## Nodo Code (La receta personalizada)
+
+Aunque n8n cuenta con cientos de nodos prediseñados, ciertas operaciones demandan transformaciones complejas de datos, operaciones matemáticas o formateos específicos. Para ello existe el **Nodo Code**, que permite ejecutar código **JavaScript o Python** directamente en memoria.
+
+Si recibes nombres desordenados como `juan perez`, `MARIA GOMEZ` o `cArLoS rOjAs`, un Nodo Code de apenas 3 líneas normaliza los registros a `Juan Perez`, `Maria Gomez` y `Carlos Rojas` antes de guardarlos.
+
+---
+
+## Resumen Conceptual Comparativo
+
+| Concepto | Función Técnica | Analogía Cotidiana |
+| :--- | :--- | :--- |
+| **Trigger** | Inicia la secuencia por tiempo o sondeo | La alarma programada del celular |
+| **Webhook** | Recibe datos enviados instantáneamente | El timbre cuando llega un paquete |
+| **IF** | Evalúa una condición booleana (True / False) | ¿Llevar sombrilla si está lloviendo? |
+| **Rama True** | Ejecuta acciones si la condición se cumple | Abrir el paraguas |
+| **Rama False** | Ejecuta acciones si la condición no se cumple | Ponerse las gafas de sol |
+| **Action Node** | Realiza una operación concreta | Escribir un correo, guardar un archivo |
+| **Nodo Code** | Ejecuta scripts personalizados (JS/Python) | La receta secreta de cocina a medida |
+
+> **Idea Clave:**
+> Toda automatización sigue una regla natural:
+> `Evento (Trigger/Webhook) ➔ Condición (IF) ➔ Acción (Action Node) ➔ Transformación Especial (Code)`.
+
+---
+
+export const level1Blocks = [
+  { id: 'A', text: '[Camino SÍ] Preparar un café doble.' },
+  { id: 'B', text: '[Condición] ¿Tengo mucho sueño todavía?' },
+  { id: 'C', text: '[Acción Final] Bañarse y salir al trabajo.' },
+  { id: 'D', text: '[Disparador] Suena la alarma a las 6:00 AM.' },
+  { id: 'E', text: '[Camino NO] Hacer 15 min de ejercicio.' },
+];
+
+export const level2Blocks = [
+  { id: 'A', text: '[Disparador] Llegas a casa con mucha hambre a las 7:00 PM.' },
+  { id: 'B', text: '[Acción Final] Comer, lavar los platos y descansar.' },
+  { id: 'C', text: '[Camino SÍ] Sacar ingredientes y cocinar.' },
+  { id: 'D', text: '[Condición] ¿Hay comida en la nevera?' },
+  { id: 'E', text: '[Camino NO] Pedir una pizza a domicilio.' },
+];
+
+export const level3Blocks = [
+  { id: 'A', text: 'Usar ciclo de ropa oscura y agua fría.' },
+  { id: 'B', text: 'Sacar la ropa y tenderla para secar.' },
+  { id: 'C', text: 'La cesta de ropa sucia está llena.' },
+  { id: 'D', text: 'Usar ciclo de blancos y un poco de cloro.' },
+  { id: 'E', text: 'Revisar: ¿Es una carga de ropa blanca?' },
+];
+
+export const m1Levels = [
+  {
+    id: 1,
+    name: 'Reto 1: La Mañana',
+    scenario: 'Ordena los pasos para estructurar la rutina matutina de inicio de jornada.',
+    blocks: level1Blocks,
+    correctOrder: ['D', 'B', 'A', 'E', 'C'],
+  },
+  {
+    id: 2,
+    name: 'Reto 2: La Cena',
+    scenario: 'Llegas tarde a casa y debes tomar una decisión con base en los insumos disponibles.',
+    blocks: level2Blocks,
+    correctOrder: ['A', 'D', 'C', 'E', 'B'],
+  },
+  {
+    id: 3,
+    name: 'Reto 3: La Lavandería',
+    scenario: 'Clasifica el proceso de lavado según el tipo de prenda para no dañar los tejidos.',
+    blocks: level3Blocks,
+    correctOrder: ['C', 'E', 'D', 'A', 'B'],
+  },
+];
+
+<SequenceGame
+  moduleId="modulo-1"
+  title="Evaluación Práctica: Pensamiento Lógico"
+  subtitle="Pon a prueba tu comprensión de la estructura Disparador ➔ Condición ➔ Bifurcaciones ➔ Acción"
+  levels={m1Levels}
+/>

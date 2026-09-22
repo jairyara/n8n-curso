@@ -1,0 +1,104 @@
+---
+---
+
+<dialog id="emailModal" class="backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm rounded-2xl bg-brand-surface border border-slate-700 shadow-2xl p-0 w-full max-w-md m-auto text-slate-100 open:animate-pop-in">
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2 text-n8n">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <h3 class="text-lg font-bold text-slate-100">Identificación de Estudiante</h3>
+      </div>
+      <button id="closeEmailModal" type="button" class="text-slate-400 hover:text-slate-200 transition-colors p-1" aria-label="Cerrar modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <p class="text-sm text-slate-400 mb-5">
+      Ingresa tu correo institucional o personal para sincronizar tu progreso en este dispositivo.
+    </p>
+
+    <form id="emailForm" class="space-y-4">
+      <div>
+        <label for="modalEmailInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+          Correo Electrónico
+        </label>
+        <input
+          type="email"
+          id="modalEmailInput"
+          placeholder="tu_correo@ejemplo.com"
+          required
+          class="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-n8n focus:outline-none focus:ring-1 focus:ring-n8n transition-colors"
+        />
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="cancelEmailBtn"
+          class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-5 py-2 text-sm font-semibold rounded-lg bg-n8n text-white hover:bg-n8n-hover shadow-lg shadow-n8n/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Guardar Identificación
+        </button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<script>
+  import { getUserEmail, setUserEmail } from '@/scripts/progress';
+
+  const modal = document.getElementById('emailModal') as HTMLDialogElement | null;
+  const form = document.getElementById('emailForm') as HTMLFormElement | null;
+  const input = document.getElementById('modalEmailInput') as HTMLInputElement | null;
+  const closeBtn = document.getElementById('closeEmailModal');
+  const cancelBtn = document.getElementById('cancelEmailBtn');
+
+  function openModal() {
+    if (!modal) return;
+    const current = getUserEmail();
+    if (input && current) input.value = current;
+    modal.showModal();
+  }
+
+  function closeModal() {
+    modal?.close();
+  }
+
+  // Escuchar trigger global para abrir este modal desde cualquier parte
+  window.addEventListener('n8n:open-email-modal', openModal);
+
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+
+  modal?.addEventListener('click', (e) => {
+    // Cerrar al hacer clic en el backdrop
+    const rect = modal.getBoundingClientRect();
+    const isInDialog = (
+      rect.top <= e.clientY &&
+      e.clientY <= rect.top + rect.height &&
+      rect.left <= e.clientX &&
+      e.clientX <= rect.left + rect.width
+    );
+    if (!isInDialog) {
+      closeModal();
+    }
+  });
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (input && input.value.trim()) {
+      setUserEmail(input.value.trim());
+      closeModal();
+    }
+  });
+</script>

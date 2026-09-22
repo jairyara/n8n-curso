@@ -1,0 +1,59 @@
+---
+interface Props {
+  moduleIds?: string[];
+}
+
+const { moduleIds = ['modulo-1', 'modulo-2', 'modulo-3'] } = Astro.props;
+---
+
+<div class="progress-widget mb-6" data-module-ids={JSON.stringify(moduleIds)}>
+  <div class="flex items-center justify-between text-xs font-semibold mb-2">
+    <span class="uppercase tracking-wider text-slate-400">Progreso del Curso</span>
+    <span class="progress-percent-label font-mono text-emerald-400">0%</span>
+  </div>
+
+  <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+    <div
+      class="progress-fill h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500 ease-out"
+      style="width: 0%;"
+    ></div>
+  </div>
+
+  <p class="progress-details-label mt-1.5 text-[11px] text-right text-slate-500">
+    0 de {moduleIds.length} módulos completados
+  </p>
+</div>
+
+<script>
+  import { calculateProgressStats, PROGRESS_EVENT } from '@/scripts/progress';
+
+  function initProgressWidgets() {
+    const widgets = document.querySelectorAll('.progress-widget');
+
+    widgets.forEach((widget) => {
+      const rawIds = widget.getAttribute('data-module-ids');
+      const moduleIds: string[] = rawIds ? JSON.parse(rawIds) : [];
+      const fillEl = widget.querySelector('.progress-fill') as HTMLElement | null;
+      const percentEl = widget.querySelector('.progress-percent-label');
+      const detailsEl = widget.querySelector('.progress-details-label');
+
+      function update() {
+        const stats = calculateProgressStats(moduleIds);
+        if (fillEl) {
+          fillEl.style.width = `${stats.percentage}%`;
+        }
+        if (percentEl) {
+          percentEl.textContent = `${stats.percentage}%`;
+        }
+        if (detailsEl) {
+          detailsEl.textContent = `${stats.completedCount} de ${stats.total} módulos completados`;
+        }
+      }
+
+      window.addEventListener(PROGRESS_EVENT, update);
+      update();
+    });
+  }
+
+  initProgressWidgets();
+</script>

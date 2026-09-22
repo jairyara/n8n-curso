@@ -1,0 +1,91 @@
+---
+id: "modulo-3"
+moduleNumber: 3
+title: "Módulo III: Implementación Práctica, Inteligencia Artificial y Gestión de Fallos"
+shortTitle: "Módulo III: Práctica e IA"
+description: "Integración con OpenAI (ChatGPT), Gmail, Google Sheets, resiliencia con políticas de reintento, flujos de error, logging y simulador de espacio de trabajo."
+duration: "75 min"
+badgeText: "Pendiente"
+interactiveType: "quiz-simulator"
+hasLessons: false
+---
+
+import VideoPlaceholder from '@/components/common/VideoPlaceholder.astro';
+import TechnicalQuiz from '@/components/interactive/TechnicalQuiz.astro';
+import NodeSimulator from '@/components/interactive/NodeSimulator.astro';
+
+<VideoPlaceholder
+  title="Video 1: Conexión con IA (OpenAI), Credenciales y Servicios de Mensajería"
+  subtitle="Autenticación con API Keys, configuración de modelos gpt-4o y prompts de servicio"
+/>
+
+## Integración con Inteligencia Artificial
+
+Al incorporar Inteligencia Artificial en n8n, pasamos de simples flujos mecánicos basados en reglas estáticas a **sistemas autónomos con capacidad de razonamiento**:
+
+### OpenAI API (El Consultor Experto)
+- **La Analogía:** Si n8n es la orquesta, OpenAI es el solista prodigio. No solo recibe instrucciones fijas; es capaz de leer un correo redactado con molestia por un cliente, identificar el motivo de fondo, interpretar el sentimiento y generar una respuesta empática y precisa en segundos.
+- **En n8n:** El nodo **OpenAI** permite enviar mensajes estructurados (`Message a Model`) especificando variables de contexto y recuperando la respuesta en formato JSON para reutilizarla en los siguientes nodos del flujo.
+
+### API Keys: La Credencial de Autenticación
+Para interactuar de forma segura con servicios como OpenAI, Gmail o Google Cloud, se utilizan **API Keys** y protocolos **OAuth2**:
+- Actúan como un pase de seguridad digital con permisos específicos.
+- Garantizan que las peticiones estén debidamente auditadas y asociadas a la cuenta autorizada.
+
+---
+
+<VideoPlaceholder
+  title="Video 2: Resiliencia, Manejo de Errores y Registro de Auditoría"
+  subtitle="Reintentos automáticos, workflows de contingencia y cajas negras (Logging)"
+/>
+
+## Arquitectura de Resiliencia: ¿Qué pasa cuando internet falla?
+
+Un flujo profesional se distingue no por cómo funciona cuando todo marcha bien, sino por su capacidad de recuperación ante fallos de red, caídas de servicios externos o datos corruptos.
+
+### 1. Reintentos (Retry on Fail)
+Si una API externa sufre una intermitencia de milisegundos, el nodo no debe colapsar inmediatamente. En la configuración del nodo en n8n activamos:
+- **Max Tries:** 3 intentos.
+- **Wait Between Tries:** 5000 ms (5 segundos).
+
+### 2. Error Triggers y Flujos de Contingencia
+Cuando un error es irrecuperable (por ejemplo, saldo insuficiente en la API de IA), se activa un **Error Trigger**. Este dispara un flujo secundario de emergencia que notifica de inmediato al equipo de ingeniería y previene inconsistencias en la base de datos.
+
+### 3. Logging y Auditoría
+El registro histórico de ejecuciones en n8n funciona como la **caja negra de un avión**. Si una ejecución se detuvo a las 3:00 AM, el registro de logs permite inspeccionar el JSON exacto de entrada y salida de cada nodo para diagnosticar el problema en minutos.
+
+---
+
+<VideoPlaceholder
+  title="Video 3: Caso Práctico - Asistente Virtual Inteligente con Google Sheets"
+  subtitle="Construcción completa: Gmail Trigger ➔ OpenAI ➔ Gmail Send ➔ Google Sheets"
+/>
+
+## Caso de Éxito: El Asistente Virtual Inteligente
+
+```text
+[Gmail Trigger (Filtro: Soporte)] ➔ [OpenAI Node (gpt-4o-mini)] ➔ [Gmail Send (Respuesta)] ➔ [Google Sheets (Auditoría)]
+```
+
+1. **Detección:** Un cliente envía un correo con dudas o incidencias al canal de soporte.
+2. **Razonamiento:** OpenAI analiza el correo y genera una solución respetuosa y profesional.
+3. **Despacho:** Gmail responde automáticamente al remitente en menos de 5 segundos.
+4. **Auditoría Humana:** Google Sheets añade una fila con la marca de tiempo, el usuario y el resumen de la respuesta para supervisión del equipo de calidad.
+
+---
+
+## Taller de Integración Práctica: Ventas VIP
+
+Imagina que debes diseñar un sistema empresarial para clasificar órdenes de compra:
+- Descargar facturas diarias desde un servicio REST.
+- Separar aquellas que superan los **$1,500 USD**.
+- Generar un mensaje de fidelización hiperpersonalizado con OpenAI.
+- Registrar el movimiento en la hoja de auditoría de ventas.
+
+---
+
+<TechnicalQuiz moduleId="modulo-3" />
+
+---
+
+<NodeSimulator moduleId="modulo-3" />

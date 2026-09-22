@@ -1,0 +1,22 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle = 'Espacio Reservado para Video' } = Astro.props;
+---
+
+<div class="my-8 rounded-xl border-2 border-dashed border-slate-700 bg-slate-950/80 p-8 text-center transition-all hover:border-n8n/60 group">
+  <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-n8n/10 text-n8n transition-transform group-hover:scale-110">
+    <svg class="h-8 w-8 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8 5v14l11-7z"></path>
+    </svg>
+  </div>
+  <h4 class="text-base font-semibold text-slate-200 group-hover:text-n8n transition-colors">
+    {title}
+  </h4>
+  <p class="mt-1 text-xs text-slate-500 font-mono">
+    [{subtitle}]
+  </p>
+</div>
